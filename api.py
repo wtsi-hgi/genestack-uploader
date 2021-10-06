@@ -2,6 +2,7 @@
     API Endpoints
 """
 
+from json.decoder import JSONDecodeError
 import typing as T
 
 import flask
@@ -16,7 +17,7 @@ Response = T.Tuple[T.Dict[str, T.Any], int]
 
 def _create_response(data: T.Any, code: int = 200) -> Response:
     return {
-        "status": "OK" if code == 200 else "FAIL",
+        "status": "OK" if code // 100 == 2 else "FAIL",
         "data": data
     }, code
 
@@ -25,8 +26,15 @@ INVALID_BODY = _create_response({"error": "no valid json body"}, 400)
 MISSING_TOKEN = _create_response({"error": "missing token"}, 403)
 UNAUTHORISED = _create_response({"error": "unauthorised"}, 403)
 NOT_IMPLEMENTED = _create_response({"error": "not implemented"}, 501)
-INTERNAL_SERVER_ERROR = _create_response(
-    {"error": "internal server error"}, 500)
+METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
+
+
+def _internal_server_error(err: T.List[str]):
+    """
+        500 Internal Server Error Response
+    """
+
+    return _create_response({"error": "internal server error", "detail": err}, 500)
 
 
 @api_blueprint.app_errorhandler(404)
@@ -82,11 +90,10 @@ def all_studies() -> Response:
         except Exception as err:
             # should this maybe be a 500?
             return _create_response({"error": err}, 500)
-    elif flask.request.method == "GET":
+    if flask.request.method == "GET":
         # TODO
         return NOT_IMPLEMENTED
-    else:
-        return INTERNAL_SERVER_ERROR
+    return METHOD_NOT_ALLOWED
 
 
 @api_blueprint.route("/studies/<study_id>", methods=["GET", "POST"])
@@ -103,27 +110,47 @@ def single_study(study_id: str) -> Response:
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils()
-            study = gsu.ApplicationsODM(gsu, None).get_study(study_id).json()
-            return study
-        except Exception as _:
-            # TODO
-            return NOT_IMPLEMENTED
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
+            return _create_response(study.json())
+        except PermissionError:
+            return UNAUTHORISED
+        except JSONDecodeError:
+            if "Object cannot be found" in study.text:
+                return _not_found(study.text)
+            raise
+        except Exception as err:
+            return _internal_server_error(err.args)
+    return METHOD_NOT_ALLOWED
 
 
 @api_blueprint.route("/studies/<study_id>/signals", methods=["GET", "POST"])
-def all_signals(study_id: str) -> T.Dict[str, T.Any]:
+def all_signals(study_id: str) -> Response:
     """
         GET: get all signal datasets for a study
         POST: create new dataset for study
     """
-    ...
+    token: str = flask.request.headers.get("Genestack-API-Token")
+    if not token:
+        return MISSING_TOKEN
+    if flask.request.method == "POST":
+        return NOT_IMPLEMENTED
+    if flask.request.method == "GET":
+        return NOT_IMPLEMENTED
+    return METHOD_NOT_ALLOWED
 
 
 @api_blueprint.route("/studies/<study_id>/signals/<signal_id>", methods=["GET", "POST"])
-def single_signal(study_id: str, signal_id: str) -> T.Dict[str, T.Any]:
+def single_signal(study_id: str, signal_id: str) -> Response:
     """
         GET: get information about single dataset
         POST: update a single dataset
     """
-    ...
+    token: str = flask.request.headers.get("Genestack-API-Token")
+    if not token:
+        return MISSING_TOKEN
+    if flask.request.method == "POST":
+        return NOT_IMPLEMENTED
+    if flask.request.method == "GET":
+        return NOT_IMPLEMENTED
+    return METHOD_NOT_ALLOWED
