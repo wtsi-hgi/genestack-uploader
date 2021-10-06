@@ -6,6 +6,7 @@ from json.decoder import JSONDecodeError
 import typing as T
 
 import flask
+import requests
 import uploadtogenestack
 
 import config
@@ -29,7 +30,7 @@ NOT_IMPLEMENTED = _create_response({"error": "not implemented"}, 501)
 METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
 
 
-def _internal_server_error(err: T.List[str]):
+def _internal_server_error(err: T.Tuple[T.Any, ...]):
     """
         500 Internal Server Error Response
     """
@@ -63,7 +64,7 @@ def all_studies() -> Response:
     if not token:
         return MISSING_TOKEN
     if flask.request.method == "POST":
-        body = flask.request.json
+        body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
             return INVALID_BODY
         try:
@@ -88,8 +89,7 @@ def all_studies() -> Response:
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
         except Exception as err:
-            # should this maybe be a 500?
-            return _create_response({"error": err}, 500)
+            return _internal_server_error(err.args)
     if flask.request.method == "GET":
         # TODO
         return NOT_IMPLEMENTED
@@ -109,6 +109,7 @@ def single_study(study_id: str) -> Response:
         # TODO
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
+        study: T.Optional[requests.Response] = None
         try:
             gsu = uploadtogenestack.genestack_utils(token=token)
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
@@ -116,7 +117,7 @@ def single_study(study_id: str) -> Response:
         except PermissionError:
             return UNAUTHORISED
         except JSONDecodeError:
-            if "Object cannot be found" in study.text:
+            if study and "Object cannot be found" in study.text:
                 return _not_found(study.text)
             raise
         except Exception as err:
