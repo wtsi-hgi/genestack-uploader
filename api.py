@@ -104,7 +104,8 @@ def single_study(study_id: str) -> Response:
     if flask.request.method == "GET":
         try:
             gsu = uploadtogenestack.genestack_utils()
-            return gsu.ApplicationsODM(gsu, None).get_study(study_id).json()
+            study = gsu.ApplicationsODM(gsu, None).get_study(study_id).json()
+            return study
         except Exception as _:
             # TODO
             return NOT_IMPLEMENTED
