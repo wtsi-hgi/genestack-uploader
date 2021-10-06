@@ -11,8 +11,8 @@ To help make uploading data to Genestack, Emre has created a Python package (`sa
 - JSON responses **should** be of the form:
 ```JSON
 {
-    "status": "OK" | "FAIL",
-    "data": {...}
+    "status": "OK | FAIL",
+    "data": {}
 }
 ```
 - Endpoints **must** use an appropriate HTTP method, such as `POST` or `GET` for what is being accomplished.
@@ -67,8 +67,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
         "studies": [
             {
                 "studyAccession": "ABC123",
-                "studyName": "Study Name",
-                ...
+                "studyName": "Study Name"
             }
         ]
     }
@@ -85,8 +84,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
 
 ```json
 {
-    "metadataKey": "metadataValue",
-    ...
+    "metadataKey": "metadataValue"
 }
 ```
 
@@ -99,8 +97,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
     "status": "OK",
     "data": {
         "studyAccession": "newAccession",
-        "metadataKey": "metadataValue",
-        ...
+        "metadataKey": "metadataValue"
     }
 }
 ```
@@ -116,7 +113,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
 {
     "status": "FAIL",
     "data": {
-        error data
+        "error": "error data"
     }
 }
 ```
@@ -125,7 +122,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
     <td>we'll return this if the <code>uploadtogenestack</code> package can't create the study, and returns an error</td>
     </tr>
     <tr>
-        <td rowspan=2><code>/studies/{id}</code>
+        <td rowspan=5><code>/studies/{id}</code>
         <td rowspan=2>GET</td>
         <td rowspan=2></td>
         <td>200 OK</td>
@@ -136,7 +133,7 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
     "status": "OK",
     "data": {
         "studyAccession": "id",
-        ...
+        "metadataKey": "metadataValue"
     }
 }
 ```
@@ -151,18 +148,220 @@ All API endpoints other than `/` **may** return 403 Unauthorised if the Genestac
 {
     "status": "FAIL",
     "data": {
-        not found error data
+        "error": "error data..."
     }
 }
 ```
 
 </td>
-    <td>When we can't find the study with that id</td>
+        <td>When we can't find the study with that id</td>
+    </tr>
+    <tr>
+        <td rowspan=3>POST</td>
+        <td rowspan=3>
 
+```json
+{
+    "metadataKey": "metadataValue"
+}
+```
 
+</td>
+        <td>200 OK</td>
+        <td>
+
+```json
+{
+    "status": "OK",
+    "data": {
+        "metadataKey": "metadataValue"
+    }
+}
+```
+</td>
+        <td>Multiple key-value pairs can be given, but any not given will be removed</td>
+    </tr>
+    <tr>
+        <td>404 Not Found</td>
+        <td rowspan=2>
+
+```json
+{
+    "status": "FAIL",
+    "data": {
+        "error": "error data..."
+    }
+}
+```
+
+</td>
+        <td>When <code>{id}</code> can't be found</td>
+    </tr>
+    <tr>
+        <td>400 Bad Request</td>
+        <td>If <code>uploadtogenestack</code> returns an error</td>
+    </tr>
+    <tr>
+        <td rowspan=5><code>/studies/{id}/signals</code></td>
+        <td rowspan=2>GET</td>
+        <td rowspan=2></td>
+        <td>200 OK</td>
+        <td>
+
+```json
+{
+    "status": "OK",
+    "data": {
+        "signals": [
+            {
+                "metadataKey": "metadataValue"
+            }
+        ]
+    }
+}
+```
+
+</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>404 Not Found</td>
+        <td>
+
+```json
+{
+    "status": "FAIL",
+    "data": {
+        "error": "error data..."
+    }
+}
+```
+</td>
+    <td>When we can't find study <code>id</code></td>
+    </tr>
+    <tr>
+        <td rowspan=3>POST</td>
+        <td rowspan=3>
+
+```json
+{
+    "metadataKey": "metadataValue"
+}
+```
+
+</td>
+        <td>201 Created</td>
+        <td>
+
+```json
+{
+    "status": "OK",
+    "data": {
+        "signalAccession": "12345",
+        "metadataKey": "metadataValue"
+    }
+}
+```
+
+</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>404 Not Found</td>
+        <td rowspan=2>
+
+```json
+{
+    "status": "FAIL",
+    "data": {
+        "error": "error data..."
+    }
+}
+```
+</td>
+        <td>If we can't find study <code>id</code></td>
+    </tr>
+    <tr>
+        <td>400 Bad Request</td>
+        <td>If <code>uploadtogenestack</code> returns an error</td>
+    </tr>
+    <tr>
+        <td rowspan=5><code>/studies/{id}/signals/{signal_id}</code></td>
+        <td rowspan=2>GET</td>
+        <td rowspan=2></td>
+        <td>200 OK</td>
+        <td>
+
+```json
+{
+    "status": "OK",
+    "data": {
+        "metadataKey": "metadataValue"
+    }
+}
+```
+</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>404 Not Found</td>
+        <td>
+
+```json
+{
+    "status": "FAIL",
+    "data": {
+        "error": "error data..."
+    }
+}
+```
+</td>
+    <td>When either study <code>id</code> or signal <code>signal_id</code> isn't found</td>
+    </tr>
+    <tr>
+        <td rowspan=3>POST</td>
+        <td rowspan=3>
+
+```json
+{
+    "metadataKey": "metadataValue"
+}
+```
+</td>
+        <td>200 OK</td>
+        <td>
+
+```json
+{
+    "status": "OK",
+    "data": {
+        "metadataKey": "metadataValue"
+    }
+}
+```
+</td>
+        <td>Multiple metadata pairs can be updated simultaneously. Any pairs not supplied will be removed</td>
+    </tr>
+    <tr>
+        <td>404 Not Found</td>
+        <td rowspan=2>
+
+```json
+{
+    "status": "FAIL",
+    "data": {
+        "error": "error data..."
+    }
+}
+```
+</td>
+        <td>When either <code>id</code> or <code>signal_id</code> isn't found</td>
+    </tr>
+    <tr>
+        <td>400 Bad Request</td>
+        <td>When <code>uploadtogenestack</code> returns an error
+    </tr>
 </table>
-
-*TODO: Finish Table*
 
 
 ## Frontend
