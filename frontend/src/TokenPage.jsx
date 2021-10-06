@@ -4,7 +4,6 @@ import { Form, FormGroup, FormControl, FormLabel, Button } from "react-bootstrap
 function TokenPage() {
   return (
     <div className="App">
-      <header className="App-header">
         <div className="Internal">
         <h1>Genestack Uploader</h1>
         <br />
@@ -21,7 +20,6 @@ function TokenPage() {
         </Form>
           
           </div>
-      </header>
     </div>
   );
 }

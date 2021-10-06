@@ -1,16 +1,6 @@
 .App {
   text-align: center;
-}
-
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+  background-color: #021;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -20,10 +10,27 @@
   color: white;
 }
 
-
-
 .Internal {
   border: 1px solid white;
-  border-radius: 5%;
-  padding: 10% 10%;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 5px;
+}
+
+.wide-area {
+  width: 70%;
+}
+
+.narrow-area {
+  width: 30%;
+}
+
+.flex-container {
+  display: flex;
+  min-height: 90vh;
+  min-width: 95vw;
+}
+
+.form-area {
+  padding-right: 20%;
 }

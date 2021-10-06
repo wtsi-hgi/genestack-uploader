@@ -2,11 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import TokenPage from './TokenPage';
-import reportWebVitals from './reportWebVitals';
+import Study from './Study';
 
 ReactDOM.render(
   <React.StrictMode>
-    <TokenPage />
+    {/* <TokenPage /> */}
+    <Study />
   </React.StrictMode>,
   document.getElementById('root')
 );
