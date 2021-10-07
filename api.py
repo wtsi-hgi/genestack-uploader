@@ -91,8 +91,17 @@ def all_studies() -> Response:
         except Exception as err:
             return _internal_server_error(err.args)
     if flask.request.method == "GET":
-        # TODO
-        return NOT_IMPLEMENTED
+        studies: T.Optional[requests.Response] = None
+        try:
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            # Note: This doesn't take into account pagination
+            # will return max. 2000 results
+            studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
+            return _create_response(studies.json()["data"])
+        except PermissionError:
+            return UNAUTHORISED
+        except Exception as err:
+            return _internal_server_error(err.args)
     return METHOD_NOT_ALLOWED
 
 
