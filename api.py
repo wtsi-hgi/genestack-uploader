@@ -173,5 +173,21 @@ def single_signal(study_id: str, signal_id: str) -> Response:
     if flask.request.method == "POST":
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
-        return NOT_IMPLEMENTED
+        signals: T.Optional[T.List[str]] = None
+        try:
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            signals = [signal for type in ["variant", "expression"]
+                       for signal in gsu.get_signals_by_group(study_id, type)
+                       if signal["itemId"] == signal_id]
+            if len(signals) == 1:
+                return _create_response({"studyAccession": study_id, "signal": signals[0]})
+            if len(signals) == 0:
+                return _not_found(f"signal {signal_id} not found on study {study_id}")
+            return _internal_server_error(("multiple signals found",))
+        except PermissionError:
+            return UNAUTHORISED
+        except uploadtogenestack.genestackETL.StudyAccessionError as err:
+            return _not_found(err)
+        except Exception as err:
+            return _internal_server_error(*err.args)
     return METHOD_NOT_ALLOWED
