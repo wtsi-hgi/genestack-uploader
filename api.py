@@ -91,7 +91,6 @@ def all_studies() -> Response:
         except Exception as err:
             return _internal_server_error(err.args)
     if flask.request.method == "GET":
-        studies: T.Optional[requests.Response] = None
         try:
             gsu = uploadtogenestack.genestack_utils(token=token)
             # Note: This doesn't take into account pagination
@@ -146,7 +145,6 @@ def all_signals(study_id: str) -> Response:
     if flask.request.method == "POST":
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
-        signals: T.Optional[T.List[str]] = None
         try:
             gsu = uploadtogenestack.genestack_utils(token=token)
             signals = [signal for type in ["variant", "expression"]
@@ -173,7 +171,6 @@ def single_signal(study_id: str, signal_id: str) -> Response:
     if flask.request.method == "POST":
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
-        signals: T.Optional[T.List[str]] = None
         try:
             gsu = uploadtogenestack.genestack_utils(token=token)
             signals = [signal for type in ["variant", "expression"]
