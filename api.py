@@ -146,7 +146,18 @@ def all_signals(study_id: str) -> Response:
     if flask.request.method == "POST":
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
-        return NOT_IMPLEMENTED
+        signals: T.Optional[T.List[str]] = None
+        try:
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            signals = [signal for type in ["variant", "expression"]
+                       for signal in gsu.get_signals_by_group(study_id, type)]
+            return _create_response({"studyAccession": study_id, "signals": signals})
+        except PermissionError:
+            return UNAUTHORISED
+        except uploadtogenestack.genestackETL.StudyAccessionError as err:
+            return _not_found(err)
+        except Exception as err:
+            return _internal_server_error(*err.args)
     return METHOD_NOT_ALLOWED
 
 
