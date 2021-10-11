@@ -188,3 +188,43 @@ def single_signal(study_id: str, signal_id: str) -> Response:
         except Exception as err:
             return _internal_server_error(*err.args)
     return METHOD_NOT_ALLOWED
+
+
+@api_blueprint.route("/templates", methods=["GET"])
+def get_all_templates():
+    """
+        Gets all the templates from genestack
+    """
+    token: str = flask.request.headers.get("Genestack-API-Token")
+    if not token:
+        return MISSING_TOKEN
+    if flask.request.method == "GET":
+        try:
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            template = gsu.ApplicationsODM(gsu, None).get_all_templates()
+            return _create_response({"template": template.json()["result"]})
+        except PermissionError:
+            return UNAUTHORISED
+        except Exception as err:
+            return _internal_server_error(*err.args)
+
+
+@api_blueprint.route("/templates/<template_id>", methods=["GET"])
+def get_template(template_id: str):
+    """
+        Gets the details about template <template_id> (accession)
+        from genestack
+    """
+    token: str = flask.request.headers.get("Genestack-API-Token")
+    if not token:
+        return MISSING_TOKEN
+    if flask.request.method == "GET":
+        try:
+            gsu = uploadtogenestack.genestack_utils(token=token)
+            template = gsu.ApplicationsODM(
+                gsu, None).get_template_detail(template_id)
+            return _create_response({"template": template.json()["result"]})
+        except PermissionError:
+            return UNAUTHORISED
+        except Exception as err:
+            return _internal_server_error(*err.args)
