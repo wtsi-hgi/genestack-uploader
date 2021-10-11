@@ -202,7 +202,7 @@ def get_all_templates():
         try:
             gsu = uploadtogenestack.genestack_utils(token=token)
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
-            return _create_response({"template": template.json()["result"]})
+            return _create_response(template.json()["result"])
         except PermissionError:
             return UNAUTHORISED
         except Exception as err:
@@ -223,7 +223,7 @@ def get_template(template_id: str):
             gsu = uploadtogenestack.genestack_utils(token=token)
             template = gsu.ApplicationsODM(
                 gsu, None).get_template_detail(template_id)
-            return _create_response({"template": template.json()["result"]})
+            return _create_response({"accession": template_id, "template": template.json()["result"]})
         except PermissionError:
             return UNAUTHORISED
         except Exception as err:

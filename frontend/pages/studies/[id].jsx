@@ -44,7 +44,7 @@ const Study = () => {
                         <input 
                             type="text" 
                             className="form-control" 
-                            id={key} 
+                            name={key} 
                             defaultValue={studyData[key]} 
                             onChange={e => {setNewData({...newData, [key]: e.target.value})}} 
                             />
