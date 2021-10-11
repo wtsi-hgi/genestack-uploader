@@ -6,3 +6,9 @@ export const apiRequest = async (endpoint) => {
     })
     return await r.json()
   }
+
+export const keyCheck = () => {
+    if (localStorage.getItem("Genestack-API-Token") == null) {
+        window.location = "/"
+    }
+}
