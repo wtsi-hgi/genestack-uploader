@@ -1,3 +1,9 @@
 .venv
 typings
 .vscode
+
+test_upload_tmp
+make_samples.py
+*.tsv
+
+.DS_Store

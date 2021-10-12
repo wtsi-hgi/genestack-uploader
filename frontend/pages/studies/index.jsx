@@ -26,6 +26,7 @@ const NewStudy = () => {
     const loadTemplate = () => {
         apiRequest(`templates/${selectedTemplate}`).then(t => {
             var fields = t.data.template.filter(e => !e.isReadOnly && e.dataType == "study").map(e => e.name)
+            fields.unshift("Sample File")
             setTemplateFields(fields)
             setNewStudy(fields.reduce((xs, x) => ({...xs, [x]: ""}), {}))
         })

@@ -3,6 +3,7 @@
 """
 
 from json.decoder import JSONDecodeError
+import time
 import typing as T
 
 import flask
@@ -68,26 +69,28 @@ def all_studies() -> Response:
         if body is None:
             return INVALID_BODY
         try:
-            # Required Body Fields
 
-            #     - studyName
+            sample_file = body["Sample File"]
+            del body["Sample File"]
 
-            # Optional Body Fields
-
-            #     - localDirectory
-            #     - sampleFile
+            tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+            with open(tmp_fp, "w") as f:
+                f.write("\t".join(body.keys()) + "\n")
+                f.write("\t".join(body.values()) + "\n")
 
             study = uploadtogenestack.genestackstudy(
-                studyname=body["studyName"],
-                study_local=body.get("localDirectory"),
-                samplefile=body.get("sampleFile"),
+                studyname=body.get("Study Title") or body.get("Study Source"),
+                samplefile=sample_file,
                 genestackserver=config.GENESTACK_SERVER,
-                genestacktoken=token
+                genestacktoken=token,
+                studymetadata=tmp_fp
             )
             # TODO Method in uploadtogenestack
             return _create_response(study.allstudydict)
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
+        except PermissionError:
+            return UNAUTHORISED
         except Exception as err:
             return _internal_server_error(err.args)
     if flask.request.method == "GET":

@@ -16,7 +16,8 @@ export const postApiReqiest = async (endpoint, body) => {
     const r = await fetch(`/api/${endpoint}`, {
         method: "POST",
         headers: {
-            "Genestack-API-Token": localStorage.getItem("Genestack-API-Token")
+            "Genestack-API-Token": localStorage.getItem("Genestack-API-Token"),
+            "Content-Type": "application/json"
         },
         body: JSON.stringify(body)
     })
