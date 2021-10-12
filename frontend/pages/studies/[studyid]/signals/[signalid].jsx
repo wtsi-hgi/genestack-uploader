@@ -38,6 +38,7 @@ const Signal = () => {
 
     return (
         <div className={styles.main}>
+            <h1>{signalId}</h1>
             <form>
                 {Object.keys(signalData).map((key) => (
                     <div key={key} className="form-group">

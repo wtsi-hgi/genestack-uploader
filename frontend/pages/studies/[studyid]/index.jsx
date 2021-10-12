@@ -43,23 +43,30 @@ const Study = () => {
     return (
         <div className={styles.main}>
             <h1>{studyData["Study Title"]}</h1>
-            <form>
-                {Object.keys(studyData).map((key) => (
-                    <div key={key} className="form-group">
-                        <label htmlFor={key}>{key}</label>
-                        <input 
-                            type="text" 
-                            className="form-control" 
-                            name={key} 
-                            defaultValue={studyData[key]} 
-                            onChange={e => {setNewData({...newData, [key]: e.target.value})}} 
-                            />
-                        <br />
-                    </div>
-                ))}
-                <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
-            </form>
-            {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
+            <div className={styles.flexContainer}>
+                <form className={styles.flexColumn}>
+                    {Object.keys(studyData).map((key) => (
+                        <div key={key} className="form-group">
+                            <label htmlFor={key}>{key}</label>
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                name={key} 
+                                defaultValue={studyData[key]} 
+                                onChange={e => {setNewData({...newData, [key]: e.target.value})}} 
+                                />
+                            <br />
+                        </div>
+                    ))}
+                    <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
+                </form>
+            
+                <div className={styles.flexColumn}>
+                    <h3>Signals</h3>
+                    <a href={`/studies/${studyId}/signals`}>New Signal</a>
+                    {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
+                </div>
+            </div>
         </div>
     )
 }
