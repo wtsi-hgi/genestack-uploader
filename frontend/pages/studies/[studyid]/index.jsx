@@ -1,7 +1,7 @@
 import {useRouter} from "next/router"
 import { useEffect, useState } from "react";
-import { apiRequest, keyCheck, postApiReqiest } from "../../utils/api"
-import styles from '../../styles/Home.module.css'
+import { apiRequest, keyCheck, postApiReqiest } from "../../../utils/api"
+import styles from '../../../styles/Home.module.css'
 
 const Study = () => {
     const router = useRouter();
@@ -9,18 +9,24 @@ const Study = () => {
     const [studyId, setStudyId] = useState("");
     const [studyData, setStudyData] = useState(Object);
     const [newData, setNewData] = useState(Object);
+    const [signalData, setSignalData] = useState([]);
 
     useEffect(() => {
-        var {id} = router.query;
-        if (id) {
+        var {studyid} = router.query;
+        if (studyid) {
             keyCheck()
-            setStudyId(id);
-            apiRequest(`studies/${id}`).then((study) => {
+            setStudyId(studyid);
+            apiRequest(`studies/${studyid}`).then((study) => {
                 if (study) {
                     setStudyData({...study.data});
                     setNewData({...study.data});
                 }
             });
+            apiRequest(`studies/${studyid}/signals`).then((signals) => {
+                if (signals) {
+                    setSignalData(signals.data.signals)
+                }
+            })
         }
     }, [router.query])
 
@@ -53,6 +59,7 @@ const Study = () => {
                 ))}
                 <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
             </form>
+            {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
         </div>
     )
 }

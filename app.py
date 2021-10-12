@@ -25,7 +25,15 @@ def _studies_index():
 
 @app.route("/studies/<_>")
 def _studies_id(_):
-    return flask.send_from_directory(app.static_folder + "/studies", "[id].html")
+    return flask.send_from_directory(app.static_folder + "/studies", "[studyid].html")
+
+@app.route("/studies/<_>/signals")
+def _signal_index(_):
+    return flask.send_from_directory(app.static_folder + "/studies/[studyid]", "signals.html")
+
+@app.route("/studies/<_a>/signals/<_b>")
+def _signals_id(**_):
+    return flask.send_from_directory(app.static_folder + "/studies/[studyid]/signals", "[signalid].html")
 
 if __name__ == "__main__":
     app.run()
