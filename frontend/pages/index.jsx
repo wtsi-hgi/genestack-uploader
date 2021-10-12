@@ -5,7 +5,7 @@ import { apiRequest } from '../utils/api';
 
 
 const studyNames = async () => {
-  var studies = await apiRequest("studies");
+  var studies = await apiRequest("studies", true);
   return studies.data.map(e => ({"title": e["Study Title"], "accession": e["genestack:accession"]}));
 }
 
@@ -13,12 +13,17 @@ export default function Home() {
 
   const [studies, setStudies] = useState([]);
   const [selectedStudy, setSelectedStudy] = useState("");
+  const [unauthorisedWarning, setUnauthorisedWarning] = useState(false);
 
   const authenticate = () => {
+    localStorage.setItem("unauthorised", false);
     studyNames().then((names) => {setStudies(names)})
   }
 
-  useEffect(() => {authenticate()}, [])
+  useEffect(() => {
+    setUnauthorisedWarning(localStorage.getItem("unauthorised"))
+    authenticate()
+  }, [])
 
   const goToStudy = () => {
     window.location = `/studies/${selectedStudy}`
@@ -27,7 +32,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>Genestack Uploader</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -39,6 +44,10 @@ export default function Home() {
         <p className={styles.description}>
           Easily upload new studies to Genestack
         </p>
+
+        {unauthorisedWarning && <div className="alert alert-danger">
+          Unauthorised
+        </div>}
 
         <div className="form-group">
           <label>Genestack API Token</label>

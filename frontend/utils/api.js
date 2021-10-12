@@ -1,9 +1,14 @@
-export const apiRequest = async (endpoint) => {
+export const apiRequest = async (endpoint, ignore_unauth = false) => {
     const r = await fetch(`/api/${endpoint}`, {
         headers: {
             "Genestack-API-Token": localStorage.getItem("Genestack-API-Token")
         }
     })
+    if (r.status == 403 && !ignore_unauth) {
+        localStorage.setItem("unauthorised", true);
+        window.location = "/"
+        return null;
+    }
     return await r.json()
   }
 
