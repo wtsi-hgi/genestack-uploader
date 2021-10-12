@@ -29,7 +29,9 @@ const NewSignal = () => {
             keyCheck()
             setStudyId(studyid)
             apiRequest("templates").then((t) => {
-                setTemplates(t.data.map(e => ({"name": e.name, "accession": e.accession})))
+                var templates = t.data.map(e => ({"name": e.name, "accession": e.accession}))
+                setTemplates(templates);
+                setSelectedTemplate(templates[0].accession);
             })
         }
     }, [router.query])
@@ -44,10 +46,12 @@ const NewSignal = () => {
     const loadTemplateSubtype = () => {
         var fields = fullTemplateFields.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => e.name)
         setTemplateFields(fields)
+        setSelectedTemplateSubtype(fields[0])
         setNewSignal(fields.reduce((xs, x) => ({...xs, [x]: ""}), {}))
     }
 
     const submitSignal = async () => {
+        setSuccessfulRequest("LOADING")
         var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}/signals`, newSignal)
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
@@ -109,6 +113,7 @@ const NewSignal = () => {
                 {templateFields.length != 0 && (<button type="button" className="btn btn-primary" onClick={submitSignal}>Submit</button>)}
             </form>
             <br />
+            {successfulRequest == "LOADING" && (<div className="spinner-border" role="status"></div>)}
             {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
             {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
             {apiError != "" && (<code>{apiError}</code>)}

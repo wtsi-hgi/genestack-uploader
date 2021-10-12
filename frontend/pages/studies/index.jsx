@@ -19,7 +19,9 @@ const NewStudy = () => {
     useEffect(() => {
         keyCheck()
         apiRequest("templates").then((t) => {
-            setTemplates(t.data.map(e => ({"name": e.name, "accession": e.accession})))
+            var templates = t.data.map(e => ({"name": e.name, "accession": e.accession}))
+            setTemplates(templates)
+            setSelectedTemplate(templates[0].accession)
         })
     }, [])
 
@@ -33,6 +35,7 @@ const NewStudy = () => {
     }
 
     const submitStudy = async () => {
+        setSuccessfulRequest("LOADING")
         var [req_ok, req_info] = await postApiReqiest("studies", newStudy)
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
@@ -81,6 +84,7 @@ const NewStudy = () => {
                 {templateFields.length != 0 && (<button type="button" className="btn btn-primary" onClick={submitStudy}>Submit</button>)}
             </form>
             <br />
+            {successfulRequest == "LOADING" && (<div className="spinner-border" role="status"></div>)}
             {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
             {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
             {apiError != "" && (<code>{apiError}</code>)}

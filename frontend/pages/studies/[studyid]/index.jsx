@@ -38,6 +38,7 @@ const Study = () => {
     }, [router.query])
 
     const submitForm = async () => {
+        setSuccessfulRequest("LOADING")
         var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}`, newData)
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
@@ -76,6 +77,7 @@ const Study = () => {
                         <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
                     </form>
                     <br />
+                    {successfulRequest == "LOADING" && (<div className="spinner-border" role="status"></div>)}
                     {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
                     {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
                     {apiError != "" && (<code>{apiError}</code>)}

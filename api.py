@@ -25,8 +25,8 @@ def _create_response(data: T.Any, code: int = 200) -> Response:
 
 
 INVALID_BODY = _create_response({"error": "no valid json body"}, 400)
-MISSING_TOKEN = _create_response({"error": "missing token"}, 403)
-UNAUTHORISED = _create_response({"error": "unauthorised"}, 403)
+MISSING_TOKEN = _create_response({"error": "missing token"}, 401)
+FORBIDDEN = _create_response({"error": "forbidden"}, 403)
 NOT_IMPLEMENTED = _create_response({"error": "not implemented"}, 501)
 METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
 
@@ -72,6 +72,8 @@ def all_studies() -> Response:
 
             sample_file = body["Sample File"]
             del body["Sample File"]
+            if "Study Title" not in body:
+                body["Study Title"] = body["Study Source"]
 
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
             with open(tmp_fp, "w") as f:
@@ -79,7 +81,7 @@ def all_studies() -> Response:
                 f.write("\t".join(body.values()) + "\n")
 
             study = uploadtogenestack.genestackstudy(
-                studyname=body.get("Study Title") or body.get("Study Source"),
+                studyname=body["Study Title"],
                 samplefile=sample_file,
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
@@ -90,7 +92,7 @@ def all_studies() -> Response:
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except Exception as err:
             return _internal_server_error(err.args)
     if flask.request.method == "GET":
@@ -101,7 +103,7 @@ def all_studies() -> Response:
             studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
             return _create_response(studies.json()["data"])
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except Exception as err:
             return _internal_server_error(err.args)
     return METHOD_NOT_ALLOWED
@@ -126,7 +128,7 @@ def single_study(study_id: str) -> Response:
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
             return _create_response(study.json())
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except JSONDecodeError:
             if study and "Object cannot be found" in study.text:
                 return _not_found(study.text)
@@ -154,7 +156,7 @@ def all_signals(study_id: str) -> Response:
                        for signal in gsu.get_signals_by_group(study_id, type)]
             return _create_response({"studyAccession": study_id, "signals": signals})
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
         except Exception as err:
@@ -185,7 +187,7 @@ def single_signal(study_id: str, signal_id: str) -> Response:
                 return _not_found(f"signal {signal_id} not found on study {study_id}")
             return _internal_server_error(("multiple signals found",))
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
         except Exception as err:
@@ -207,7 +209,7 @@ def get_all_templates():
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
             return _create_response(template.json()["result"])
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except Exception as err:
             return _internal_server_error(*err.args)
 
@@ -228,6 +230,6 @@ def get_template(template_id: str):
                 gsu, None).get_template_detail(template_id)
             return _create_response({"accession": template_id, "template": template.json()["result"]})
         except PermissionError:
-            return UNAUTHORISED
+            return FORBIDDEN
         except Exception as err:
             return _internal_server_error(*err.args)
