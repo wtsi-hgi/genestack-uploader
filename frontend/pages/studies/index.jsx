@@ -1,6 +1,11 @@
 import { apiRequest, keyCheck, postApiReqiest } from "../../utils/api";
 import styles from "../../styles/Home.module.css"
 import {useEffect, useState} from "react"
+import {HelpModal} from "../../utils/HelpModal"
+
+const helpText = "Using this page, you can create a new study. First, select the template you wish to use, and \
+load it. Then, fill out the boxes you want, and click submit at the bottom. TODO: actually processing it and displaying \
+it to the user."
 
 const NewStudy = () => {
     const [templates, setTemplates] = useState([]);
@@ -9,6 +14,7 @@ const NewStudy = () => {
     const [newStudy, setNewStudy] = useState(Object);
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     useEffect(() => {
         keyCheck()
@@ -40,6 +46,11 @@ const NewStudy = () => {
     return (
         <div className={styles.main}>
             <h1>New Study</h1>
+
+            <HelpModal header="New Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}}/>
+            <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
+            <br />
+            
             <form>
                 <div className="form-group">
                     <label htmlFor="select-template">Select a Template</label>

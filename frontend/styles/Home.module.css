@@ -123,10 +123,12 @@
 .flexContainer {
   display: flex;
   flex-direction: row;
+  min-width: 50%;
 }
 
 .flexColumn {
   display: flex;
   flex-direction: column;
-  padding: 10%;
+  margin: 0 10%;
+  min-width: 25%;
 }

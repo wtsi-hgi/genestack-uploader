@@ -2,6 +2,10 @@ import {useRouter} from "next/router"
 import { useEffect, useState } from "react";
 import { apiRequest, keyCheck, postApiReqiest } from "../../../utils/api"
 import styles from '../../../styles/Home.module.css'
+import { HelpModal } from "../../../utils/HelpModal";
+
+const helpText = "Using this page, you can edit the metadata for a study. Change the fields \
+you want and then click submit at the bottom to update the study."
 
 const Study = () => {
     const router = useRouter();
@@ -12,6 +16,7 @@ const Study = () => {
     const [signalData, setSignalData] = useState([]);
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     useEffect(() => {
         var {studyid} = router.query;
@@ -47,9 +52,14 @@ const Study = () => {
     return (
         <div className={styles.main}>
             <h1>{studyData["Study Title"]}</h1>
+
+            <HelpModal header="Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
+            <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
+            <br />
+
             <div className={styles.flexContainer}>
-                <div>
-                    <form className={styles.flexColumn}>
+                <div className={styles.flexColumn}>
+                    <form>
                         {Object.keys(studyData).map((key) => (
                             <div key={key} className="form-group">
                                 <label htmlFor={key}>{key}</label>

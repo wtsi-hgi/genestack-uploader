@@ -2,6 +2,10 @@ import { useRouter } from "next/router"
 import { useEffect, useState } from "react";
 import { apiRequest, keyCheck, postApiReqiest } from "../../../../utils/api";
 import styles from '../../../../styles/Home.module.css'
+import { HelpModal } from "../../../../utils/HelpModal";
+
+const helpText = "This page will allow you to edit the metadata for this signal. Change the fields you want, \
+then click submit at the bottom."
 
 const Signal = () => {
     const router = useRouter();
@@ -12,6 +16,7 @@ const Signal = () => {
     const [newData, setNewData] = useState(Object);
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     useEffect(() => {
         var {studyid, signalid} = router.query;
@@ -43,6 +48,11 @@ const Signal = () => {
     return (
         <div className={styles.main}>
             <h1>{signalId}</h1>
+
+            <HelpModal header="Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
+            <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
+            <br />
+
             <form>
                 {Object.keys(signalData).map((key) => (
                     <div key={key} className="form-group">

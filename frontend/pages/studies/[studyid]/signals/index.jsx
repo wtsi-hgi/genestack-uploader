@@ -2,7 +2,10 @@ import { useEffect, useState } from "react"
 import { apiRequest, keyCheck, postApiReqiest } from "../../../../utils/api";
 import styles from "../../../../styles/Home.module.css"
 import { useRouter } from "next/router";
+import { HelpModal } from "../../../../utils/HelpModal";
 
+const helpText = "This page will help you create a new signal for the study. Firstly, select \
+a template, and then a tempalte subtype, and fill out the parts of the form you want. Then click submit."
 
 const NewSignal = () => {
     const router = useRouter();
@@ -17,6 +20,7 @@ const NewSignal = () => {
     const [newSignal, setNewSignal] = useState(Object);
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
+    const [showHelpModal, setShowHelpModal] = useState(false); 
 
     useEffect(() => {
         var {studyid} = router.query;
@@ -58,6 +62,11 @@ const NewSignal = () => {
     return (
         <div className={styles.main}>
             <h1>New Signal</h1>
+
+            <HelpModal header="New Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
+            <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
+            <br />
+
             <form>
                 <div className="form-group">
                     <label htmlFor="select-template">Select a Template</label>
