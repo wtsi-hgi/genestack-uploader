@@ -4,8 +4,7 @@ import {useEffect, useState} from "react"
 import {HelpModal} from "../../utils/HelpModal"
 
 const helpText = "Using this page, you can create a new study. First, select the template you wish to use, and \
-load it. Then, fill out the boxes you want, and click submit at the bottom. TODO: actually processing it and displaying \
-it to the user."
+load it. Then, fill out the boxes you want, and click submit at the bottom."
 
 const NewStudy = () => {
     const [templates, setTemplates] = useState([]);

@@ -4,7 +4,7 @@ export const apiRequest = async (endpoint, ignore_unauth = false) => {
             "Genestack-API-Token": localStorage.getItem("Genestack-API-Token")
         }
     })
-    if (r.status == 403 && !ignore_unauth) {
+    if ((r.status == 403 || r.status == 401) && !ignore_unauth) {
         localStorage.setItem("unauthorised", true);
         window.location = "/"
         return null;
@@ -26,6 +26,11 @@ export const postApiReqiest = async (endpoint, body) => {
 
 export const keyCheck = () => {
     if (localStorage.getItem("Genestack-API-Token") == null) {
+        window.location = "/"
+    }
+
+    // 1 Hour Expiry Time
+    if (localStorage.getItem("Genestack-API-Set-Time") < Date.now() - 3,600,000) {
         window.location = "/"
     }
 }

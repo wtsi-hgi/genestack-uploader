@@ -4,9 +4,14 @@ import styles from '../styles/Home.module.css'
 import { apiRequest } from '../utils/api';
 
 
-const studyNames = async () => {
-  var studies = await apiRequest("studies", true);
+const studyNames = async (ignore_unauth) => {
+  var studies = await apiRequest("studies", ignore_unauth);
   return studies.data.map(e => ({"title": e["Study Title"], "accession": e["genestack:accession"]}));
+}
+
+const saveAPIToken = (token) => {
+  localStorage.setItem("Genestack-API-Token", token);
+  localStorage.setItem("Genestack-API-Set-Time", Date().now());
 }
 
 export default function Home() {
@@ -15,14 +20,15 @@ export default function Home() {
   const [selectedStudy, setSelectedStudy] = useState("");
   const [unauthorisedWarning, setUnauthorisedWarning] = useState(false);
 
-  const authenticate = () => {
+  const authenticate = (ignore_unauth) => {
     localStorage.setItem("unauthorised", false);
-    studyNames().then((names) => {setStudies(names)})
+    !ignore_unauth && setUnauthorisedWarning(false);
+    studyNames(ignore_unauth).then((names) => {setStudies(names)})
   }
 
   useEffect(() => {
     setUnauthorisedWarning(localStorage.getItem("unauthorised"))
-    authenticate()
+    authenticate(true)
   }, [])
 
   const goToStudy = () => {
@@ -51,8 +57,8 @@ export default function Home() {
 
         <div className="form-group">
           <label>Genestack API Token</label>
-          <input type="text" name="token" className="form-control" onChange={e => localStorage.setItem("Genestack-API-Token", e.currentTarget.value)}/>
-          <button className="btn btn-warning form-control" onClick={authenticate}>Authenticate</button>
+          <input type="text" name="token" className="form-control" onChange={e => {saveAPIToken(e.currentTarget.value)}}/>
+          <button className="btn btn-warning form-control" onClick={() => {authenticate(false)}}>Authenticate</button>
         </div>
         <br />
         <div className="form-group">
