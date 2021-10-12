@@ -20,7 +20,7 @@ export const postApiReqiest = async (endpoint, body) => {
         },
         body: JSON.stringify(body)
     })
-    return r.ok
+    return [r.ok, await r.text()]
 }
 
 export const keyCheck = () => {

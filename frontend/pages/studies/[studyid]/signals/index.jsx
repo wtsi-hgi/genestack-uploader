@@ -15,6 +15,8 @@ const NewSignal = () => {
     const [selectedTemplateSubtype, setSelectedTemplateSubtype] = useState("");
     const [templateFields, setTemplateFields] = useState([]);
     const [newSignal, setNewSignal] = useState(Object);
+    const [successfulRequest, setSuccessfulRequest] = useState("");
+    const [apiError, setApiError] = useState("");
 
     useEffect(() => {
         var {studyid} = router.query;
@@ -42,12 +44,14 @@ const NewSignal = () => {
     }
 
     const submitSignal = async () => {
-        // TODO Actual Feedback
-        var req = await postApiReqiest(`studies/${studyId}/signals`, newSignal)
-        if (req) {
-            console.log("OK")
+        var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}/signals`, newSignal)
+        if (req_ok) {
+            setSuccessfulRequest("SUCCESS")
+            setApiError("")
+            setTimeout(() => {setSuccessfulRequest("")}, 5000)
         } else {
-            console.log("Not OK")
+            setSuccessfulRequest("FAIL")
+            setApiError(req_info)
         }
     }
 
@@ -95,6 +99,10 @@ const NewSignal = () => {
                 ))}
                 {templateFields.length != 0 && (<button type="button" className="btn btn-primary" onClick={submitSignal}>Submit</button>)}
             </form>
+            <br />
+            {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
+            {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
+            {apiError != "" && (<code>{apiError}</code>)}
         </div>
     )
 }

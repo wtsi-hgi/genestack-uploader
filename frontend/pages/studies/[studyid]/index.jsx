@@ -10,6 +10,8 @@ const Study = () => {
     const [studyData, setStudyData] = useState(Object);
     const [newData, setNewData] = useState(Object);
     const [signalData, setSignalData] = useState([]);
+    const [successfulRequest, setSuccessfulRequest] = useState("");
+    const [apiError, setApiError] = useState("");
 
     useEffect(() => {
         var {studyid} = router.query;
@@ -31,12 +33,14 @@ const Study = () => {
     }, [router.query])
 
     const submitForm = async () => {
-        // TODO Actual feedback to user, not just console logs
-        var req = await postApiReqiest(`studies/${studyId}`, newData)
-        if (req) {
-            console.log("OK")
+        var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}`, newData)
+        if (req_ok) {
+            setSuccessfulRequest("SUCCESS")
+            setApiError("")
+            setTimeout(() => {setSuccessfulRequest("")}, 5000)
         } else {
-            console.log("Not OK")
+            setSuccessfulRequest("FAIL")
+            setApiError(req_info)
         }
     }
 
@@ -44,22 +48,28 @@ const Study = () => {
         <div className={styles.main}>
             <h1>{studyData["Study Title"]}</h1>
             <div className={styles.flexContainer}>
-                <form className={styles.flexColumn}>
-                    {Object.keys(studyData).map((key) => (
-                        <div key={key} className="form-group">
-                            <label htmlFor={key}>{key}</label>
-                            <input 
-                                type="text" 
-                                className="form-control" 
-                                name={key} 
-                                defaultValue={studyData[key]} 
-                                onChange={e => {setNewData({...newData, [key]: e.target.value})}} 
-                                />
-                            <br />
-                        </div>
-                    ))}
-                    <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
-                </form>
+                <div>
+                    <form className={styles.flexColumn}>
+                        {Object.keys(studyData).map((key) => (
+                            <div key={key} className="form-group">
+                                <label htmlFor={key}>{key}</label>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    name={key} 
+                                    defaultValue={studyData[key]} 
+                                    onChange={e => {setNewData({...newData, [key]: e.target.value})}} 
+                                    />
+                                <br />
+                            </div>
+                        ))}
+                        <button type="button" className="btn btn-primary" onClick={submitForm}>Submit</button>
+                    </form>
+                    <br />
+                    {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
+                    {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
+                    {apiError != "" && (<code>{apiError}</code>)}
+                </div>
             
                 <div className={styles.flexColumn}>
                     <h3>Signals</h3>
