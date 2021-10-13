@@ -25,6 +25,5 @@ pytz==2021.3
 requests==2.26.0
 s3transfer==0.5.0
 six==1.16.0
-uploadtogenestack==1.0
 urllib3==1.26.7
 Werkzeug==2.0.2

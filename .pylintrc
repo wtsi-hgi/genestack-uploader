@@ -88,7 +88,8 @@ disable=raw-checker-failed,
         use-symbolic-message-instead,
         too-many-return-statements,
         broad-except,
-        inconsistent-return-statements
+        inconsistent-return-statements,
+        import-error ; this is to allow GH actions to approve uploadtogenestack
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
