@@ -39,10 +39,10 @@ const Study = () => {
 
     const submitForm = async () => {
         setSuccessfulRequest("LOADING")
+        setApiError("")
         var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}`, newData)
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
-            setApiError("")
             setTimeout(() => {setSuccessfulRequest("")}, 5000)
         } else {
             setSuccessfulRequest("FAIL")

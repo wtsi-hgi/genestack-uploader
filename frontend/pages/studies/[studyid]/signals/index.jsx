@@ -58,10 +58,10 @@ const NewSignal = () => {
 
     const submitSignal = async () => {
         setSuccessfulRequest("LOADING")
+        setApiError("")
         var [req_ok, req_info] = await postApiReqiest(`studies/${studyId}/signals`, newSignal)
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
-            setApiError("")
             setTimeout(() => {setSuccessfulRequest("")}, 5000)
         } else {
             setSuccessfulRequest("FAIL")
