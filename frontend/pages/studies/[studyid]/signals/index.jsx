@@ -135,6 +135,23 @@ const NewSignal = () => {
                             })}}
                         />
                         <br />
+                        <label htmlFor="linking-attribute">Linking attribute</label>
+                        {newSignal.linkingattribute.map((val, idx) => (
+                            <input
+                                type="text"
+                                key={`linking-${idx}`}
+                                className="form-control"
+                                defaultValue={val}
+                                onChange={e => {
+                                    var tmp_links = newSignal.linkingattribute;
+                                    tmp_links[idx] = e.target.value;
+                                    setNewSignal({...newSignal, "linkingattribute": tmp_links})
+                                }}
+                            />
+                        ))}
+                        <button type="button" className="btn btn-sm btn-secondary"
+                            onClick={() => {setNewSignal({...newSignal, "linkingattribute": [...newSignal.linkingattribute, ""]})}}
+                            >Add</button>
                     </div>
                 )}
                 {templateFields.map(e => (
