@@ -8,3 +8,5 @@ make_samples.py
 uploadinfo.json
 
 .DS_Store
+
+*.gct

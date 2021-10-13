@@ -30,6 +30,8 @@ FORBIDDEN = _create_response({"error": "forbidden"}, 403)
 NOT_IMPLEMENTED = _create_response({"error": "not implemented"}, 501)
 METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
 
+CREATED = _create_response("Created", 201)
+
 
 def _internal_server_error(err: T.Tuple[T.Any, ...]):
     """
@@ -168,14 +170,13 @@ def all_signals(study_id: str) -> Response:
         body["metadata"] = tmp_fp
 
         try:
-            _ = uploadtogenestack.genestackstudy(
+            uploadtogenestack.genestackstudy(
                 study_genestackaccession=study_id,
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
                 signal_dict=body
             )
-            ...
-            return NOT_IMPLEMENTED
+            return CREATED
         except PermissionError:
             return FORBIDDEN
         except Exception as err:

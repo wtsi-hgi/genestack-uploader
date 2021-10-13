@@ -6,7 +6,7 @@ import { apiRequest } from '../utils/api';
 
 const studyNames = async (ignore_unauth) => {
   var studies = await apiRequest("studies", ignore_unauth);
-  return studies.data.map(e => ({"title": e["Study Title"], "accession": e["genestack:accession"]}));
+  return studies.data.map(e => ({"title": e["Study Source"], "accession": e["genestack:accession"]}));
 }
 
 const saveAPIToken = (token) => {
