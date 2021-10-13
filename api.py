@@ -61,9 +61,11 @@ def all_studies() -> Response:
         GET for returning all studies
         POST for creating new study
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
+
     if flask.request.method == "POST":
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
@@ -76,9 +78,9 @@ def all_studies() -> Response:
                 body["Study Title"] = body["Study Source"]
 
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
-            with open(tmp_fp, "w") as f:
-                f.write("\t".join(body.keys()) + "\n")
-                f.write("\t".join(body.values()) + "\n")
+            with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                tmp_tsv.write("\t".join(body.keys()) + "\n")
+                tmp_tsv.write("\t".join(body.values()) + "\n")
 
             study = uploadtogenestack.genestackstudy(
                 studyname=body["Study Title"],
@@ -95,9 +97,11 @@ def all_studies() -> Response:
             return FORBIDDEN
         except Exception as err:
             return _internal_server_error(err.args)
+
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             # Note: This doesn't take into account pagination
             # will return max. 2000 results
             studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
@@ -106,6 +110,7 @@ def all_studies() -> Response:
             return FORBIDDEN
         except Exception as err:
             return _internal_server_error(err.args)
+
     return METHOD_NOT_ALLOWED
 
 
@@ -115,16 +120,20 @@ def single_study(study_id: str) -> Response:
         GET: return information about single study
         POST: update a single study
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
+
     if flask.request.method == "POST":
         # TODO
         return NOT_IMPLEMENTED
+
     if flask.request.method == "GET":
         study: T.Optional[requests.Response] = None
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
             return _create_response(study.json())
         except PermissionError:
@@ -135,6 +144,7 @@ def single_study(study_id: str) -> Response:
             raise
         except Exception as err:
             return _internal_server_error(err.args)
+
     return METHOD_NOT_ALLOWED
 
 
@@ -144,20 +154,21 @@ def all_signals(study_id: str) -> Response:
         GET: get all signal datasets for a study
         POST: create new dataset for study
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
-    if flask.request.method == "POST":
 
+    if flask.request.method == "POST":
         body: T.Dict[str, T.Any] = flask.request.json
         tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
-        with open(tmp_fp, "w") as f:
-            f.write("\t".join(body["metadata"].keys()) + "\n")
-            f.write("\t".join(body["metadata"].values()) + "\n")
+        with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+            tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
+            tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
         body["metadata"] = tmp_fp
 
         try:
-            study = uploadtogenestack.genestackstudy(
+            _ = uploadtogenestack.genestackstudy(
                 study_genestackaccession=study_id,
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
@@ -169,10 +180,11 @@ def all_signals(study_id: str) -> Response:
             return FORBIDDEN
         except Exception as err:
             return _internal_server_error(*err.args)
-        return NOT_IMPLEMENTED
+
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)]
             return _create_response({"studyAccession": study_id, "signals": signals})
@@ -182,6 +194,7 @@ def all_signals(study_id: str) -> Response:
             return _not_found(err)
         except Exception as err:
             return _internal_server_error(*err.args)
+
     return METHOD_NOT_ALLOWED
 
 
@@ -191,14 +204,18 @@ def single_signal(study_id: str, signal_id: str) -> Response:
         GET: get information about single dataset
         POST: update a single dataset
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
+
     if flask.request.method == "POST":
         return NOT_IMPLEMENTED
+
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)
                        if signal["itemId"] == signal_id]
@@ -213,6 +230,7 @@ def single_signal(study_id: str, signal_id: str) -> Response:
             return _not_found(err)
         except Exception as err:
             return _internal_server_error(*err.args)
+
     return METHOD_NOT_ALLOWED
 
 
@@ -221,12 +239,15 @@ def get_all_templates():
     """
         Gets all the templates from genestack
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
+
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
             return _create_response(template.json()["result"])
         except PermissionError:
@@ -241,15 +262,21 @@ def get_template(template_id: str):
         Gets the details about template <template_id> (accession)
         from genestack
     """
+
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
+
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(token=token, server=config.SERVER_ENDPOINT)
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(
                 gsu, None).get_template_detail(template_id)
-            return _create_response({"accession": template_id, "template": template.json()["result"]})
+            return _create_response({
+                "accession": template_id,
+                "template": template.json()["result"]
+            })
         except PermissionError:
             return FORBIDDEN
         except Exception as err:
