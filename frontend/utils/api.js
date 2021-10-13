@@ -30,7 +30,7 @@ export const keyCheck = () => {
     }
 
     // 1 Hour Expiry Time
-    if (localStorage.getItem("Genestack-API-Set-Time") < Date.now() - 3,600,000) {
+    if (localStorage.getItem("Genestack-API-Set-Time") < Date.now() - 3600000) {
         window.location = "/"
     }
 }

@@ -47,7 +47,13 @@ const NewSignal = () => {
         var fields = fullTemplateFields.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => e.name)
         setTemplateFields(fields)
         setSelectedTemplateSubtype(fields[0])
-        setNewSignal(fields.reduce((xs, x) => ({...xs, [x]: ""}), {}))
+        setNewSignal({
+            "type": "expression", // first to load
+            "data": "",
+            "tag": "",
+            "linkingattribute": [],
+            "metadata": fields.reduce((xs, x) => ({...xs, [x]: ""}), {})
+        })
     }
 
     const submitSignal = async () => {
@@ -98,6 +104,39 @@ const NewSignal = () => {
             </form>
             <br />
             <form>
+                {templateFields.length != 0 && (
+                    <div className="form-group">
+                        <label htmlFor="select-signal-type">Signal Type</label>
+                        <select className="form-select" name="select-signal-type"
+                            onChange={(e) => setNewSignal({...newSignal, "type": e.target.value})}>
+                            <option value="expression">Expression</option>
+                            <option value="variant">Variant</option>
+                        </select>
+                        <br />
+                        <label htmlFor="signal-data">Data</label>
+                        <input 
+                            type="text" 
+                            className="form-control"
+                            name="signal-data"
+                            onChange={event => {setNewSignal({
+                                ...newSignal,
+                                "data": event.target.value
+                            })}}
+                        />
+                        <br />
+                        <label htmlFor="signal-tag">Tag</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="signal-tag"
+                            onChange={event => {setNewSignal({
+                                ...newSignal,
+                                "tag": event.target.value
+                            })}}
+                        />
+                        <br />
+                    </div>
+                )}
                 {templateFields.map(e => (
                     <div key={e} className="form-group">
                         <label htmlFor={e}>{e}</label>
@@ -105,7 +144,13 @@ const NewSignal = () => {
                             type="text"
                             className="form-control"
                             name={e}
-                            onChange={event => {setNewSignal({...newSignal, [e]: event.target.value})}}
+                            onChange={event => {setNewSignal({
+                                ...newSignal,
+                                "metadata": {
+                                    ...newSignal.metadata,
+                                    [e]: event.target.value
+                                }
+                            })}}
                         />
                         <br />
                     </div>

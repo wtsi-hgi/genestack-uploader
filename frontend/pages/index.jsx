@@ -11,7 +11,7 @@ const studyNames = async (ignore_unauth) => {
 
 const saveAPIToken = (token) => {
   localStorage.setItem("Genestack-API-Token", token);
-  localStorage.setItem("Genestack-API-Set-Time", Date().now());
+  localStorage.setItem("Genestack-API-Set-Time", Date.now());
 }
 
 export default function Home() {
