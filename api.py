@@ -148,13 +148,27 @@ def all_signals(study_id: str) -> Response:
     if not token:
         return MISSING_TOKEN
     if flask.request.method == "POST":
-        study = uploadtogenestack.genestackstudy(
-            study_genestackaccession=study_id,
-            genestackserver=config.GENESTACK_SERVER,
-            genestacktoken=token,
-            signal_dict=flask.request.json
-        )
-        ...
+
+        body: T.Dict[str, T.Any] = flask.request.json
+        tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+        with open(tmp_fp, "w") as f:
+            f.write("\t".join(body["metadata"].keys()) + "\n")
+            f.write("\t".join(body["metadata"].values()) + "\n")
+        body["metadata"] = tmp_fp
+
+        try:
+            study = uploadtogenestack.genestackstudy(
+                study_genestackaccession=study_id,
+                genestackserver=config.GENESTACK_SERVER,
+                genestacktoken=token,
+                signal_dict=body
+            )
+            ...
+            return NOT_IMPLEMENTED
+        except PermissionError:
+            return FORBIDDEN
+        except Exception as err:
+            return _internal_server_error(*err.args)
         return NOT_IMPLEMENTED
     if flask.request.method == "GET":
         try:
