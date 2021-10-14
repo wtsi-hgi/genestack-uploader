@@ -73,7 +73,6 @@ def all_studies() -> Response:
         if body is None:
             return INVALID_BODY
         try:
-
             sample_file = body["Sample File"]
             del body["Sample File"]
             if "Study Title" not in body:
@@ -93,10 +92,13 @@ def all_studies() -> Response:
             )
             # TODO Method in uploadtogenestack
             return _create_response(study.allstudydict)
+
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
+
         except PermissionError:
             return FORBIDDEN
+
         except Exception as err:
             return _internal_server_error(err.args)
 
@@ -108,8 +110,10 @@ def all_studies() -> Response:
             # will return max. 2000 results
             studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
             return _create_response(studies.json()["data"])
+
         except PermissionError:
             return FORBIDDEN
+
         except Exception as err:
             return _internal_server_error(err.args)
 
@@ -138,12 +142,15 @@ def single_study(study_id: str) -> Response:
                 token=token, server=config.SERVER_ENDPOINT)
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
             return _create_response(study.json())
+
         except PermissionError:
             return FORBIDDEN
+
         except JSONDecodeError:
             if study and "Object cannot be found" in study.text:
                 return _not_found(study.text)
             raise
+
         except Exception as err:
             return _internal_server_error(err.args)
 
@@ -163,6 +170,8 @@ def all_signals(study_id: str) -> Response:
 
     if flask.request.method == "POST":
         body: T.Dict[str, T.Any] = flask.request.json
+        body["linkingattribute"] = [{"column": x}
+                                    for x in body["linkingattribute"]]
         tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
         with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
             tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
@@ -177,10 +186,12 @@ def all_signals(study_id: str) -> Response:
                 signal_dict=body
             )
             return CREATED
+
         except PermissionError:
             return FORBIDDEN
+
         except Exception as err:
-            return _internal_server_error(*err.args)
+            return _internal_server_error(err.args)
 
     if flask.request.method == "GET":
         try:
@@ -189,12 +200,15 @@ def all_signals(study_id: str) -> Response:
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)]
             return _create_response({"studyAccession": study_id, "signals": signals})
+
         except PermissionError:
             return FORBIDDEN
+
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
+
         except Exception as err:
-            return _internal_server_error(*err.args)
+            return _internal_server_error(err.args)
 
     return METHOD_NOT_ALLOWED
 
@@ -225,12 +239,15 @@ def single_signal(study_id: str, signal_id: str) -> Response:
             if len(signals) == 0:
                 return _not_found(f"signal {signal_id} not found on study {study_id}")
             return _internal_server_error(("multiple signals found",))
+
         except PermissionError:
             return FORBIDDEN
+
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
+
         except Exception as err:
-            return _internal_server_error(*err.args)
+            return _internal_server_error(err.args)
 
     return METHOD_NOT_ALLOWED
 
@@ -251,10 +268,12 @@ def get_all_templates():
                 token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
             return _create_response(template.json()["result"])
+
         except PermissionError:
             return FORBIDDEN
+
         except Exception as err:
-            return _internal_server_error(*err.args)
+            return _internal_server_error(err.args)
 
 
 @api_blueprint.route("/templates/<template_id>", methods=["GET"])
@@ -278,7 +297,9 @@ def get_template(template_id: str):
                 "accession": template_id,
                 "template": template.json()["result"]
             })
+
         except PermissionError:
             return FORBIDDEN
+
         except Exception as err:
-            return _internal_server_error(*err.args)
+            return _internal_server_error(err.args)
