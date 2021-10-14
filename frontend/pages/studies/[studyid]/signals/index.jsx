@@ -3,7 +3,8 @@ import { apiRequest, keyCheck, postApiReqiest } from "../../../../utils/api";
 import styles from "../../../../styles/Home.module.css"
 import { useRouter } from "next/router";
 import { HelpModal } from "../../../../utils/HelpModal";
-import { Trash } from "react-bootstrap-icons";
+import { Trash, ArrowLeftCircle } from "react-bootstrap-icons";
+import Link from "next/link"
 
 const helpText = "This page will help you create a new signal for the study. Firstly, select \
 a template, and then a tempalte subtype, and fill out the parts of the form you want. Then click submit."
@@ -73,6 +74,8 @@ const NewSignal = () => {
     return (
         <div className={styles.main}>
             <h1>New Signal</h1>
+
+            <Link href={`/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="New Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>

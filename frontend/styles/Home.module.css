@@ -132,3 +132,11 @@
   margin: 0 10%;
   min-width: 25%;
 }
+
+.backButton {
+  position: absolute !important; 
+  left: 5%;
+  top: 5%;
+  font-size: 200% !important;
+  color: #666 !important;
+}

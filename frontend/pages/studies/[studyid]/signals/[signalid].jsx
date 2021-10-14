@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { apiRequest, keyCheck, postApiReqiest } from "../../../../utils/api";
 import styles from '../../../../styles/Home.module.css'
 import { HelpModal } from "../../../../utils/HelpModal";
+import { ArrowLeftCircle } from "react-bootstrap-icons";
+import Link from "next/link";
 
 const helpText = "This page will allow you to edit the metadata for this signal. Change the fields you want, \
 then click submit at the bottom."
@@ -49,6 +51,8 @@ const Signal = () => {
     return (
         <div className={styles.main}>
             <h1>{signalId}</h1>
+
+            <Link href={`/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>

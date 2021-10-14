@@ -3,7 +3,7 @@ import {Modal} from "react-bootstrap"
 export const HelpModal = ({header, helpText, handleClose, show}) => {
     return (
         <Modal show={show} onHide={handleClose}>
-            <Modal.Header closeButton>
+            <Modal.Header>
                 <Modal.Title>{header}</Modal.Title>
             </Modal.Header>
             <Modal.Body>

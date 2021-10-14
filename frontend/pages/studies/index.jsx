@@ -2,6 +2,8 @@ import { apiRequest, keyCheck, postApiReqiest } from "../../utils/api";
 import styles from "../../styles/Home.module.css"
 import {useEffect, useState} from "react"
 import {HelpModal} from "../../utils/HelpModal"
+import { ArrowLeftCircle } from "react-bootstrap-icons";
+import Link from "next/link"
 
 const helpText = "Using this page, you can create a new study. First, select the template you wish to use, and \
 load it. Then, fill out the boxes you want, and click submit at the bottom."
@@ -14,6 +16,7 @@ const NewStudy = () => {
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [createdStudyAccession, setCreatedStudyAccesion] = useState("");
 
     useEffect(() => {
         keyCheck()
@@ -40,6 +43,7 @@ const NewStudy = () => {
         if (req_ok) {
             setSuccessfulRequest("SUCCESS")
             setTimeout(() => {setSuccessfulRequest("")}, 5000)
+            setCreatedStudyAccesion(JSON.parse(req_info).data.accession)
         } else {
             setSuccessfulRequest("FAIL")
             setApiError(req_info)
@@ -49,6 +53,8 @@ const NewStudy = () => {
     return (
         <div className={styles.main}>
             <h1>New Study</h1>
+
+            <Link href="/"><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="New Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}}/>
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
@@ -87,6 +93,7 @@ const NewStudy = () => {
             {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
             {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
             {apiError != "" && (<code>{apiError}</code>)}
+            {createdStudyAccession != "" && (<a href={`/studies/${createdStudyAccession}`}>Go to New Study</a>)}
         </div>
     )
 }

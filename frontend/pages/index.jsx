@@ -27,7 +27,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setUnauthorisedWarning(localStorage.getItem("unauthorised"))
+    setUnauthorisedWarning(localStorage.getItem("unauthorised") == "true")
     setStudies([])
     authenticate(true)
   }, [])

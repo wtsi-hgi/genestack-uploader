@@ -41,6 +41,14 @@ def _internal_server_error(err: T.Tuple[T.Any, ...]):
     return _create_response({"error": "internal server error", "detail": err}, 500)
 
 
+def _bad_request_error(err: T.Tuple[T.Any, ...]):
+    """
+        400 Bad Request Error Response
+    """
+
+    return _create_response({"error": "bad request", "detail": err}, 400)
+
+
 @api_blueprint.app_errorhandler(404)
 def _not_found(err: T.Any) -> Response:
     """
@@ -90,8 +98,8 @@ def all_studies() -> Response:
                 genestacktoken=token,
                 studymetadata=tmp_fp
             )
-            # TODO Method in uploadtogenestack
-            return _create_response(study.allstudydict)
+
+            return _create_response({"accession": study.study_accession}, 201)
 
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
@@ -189,6 +197,9 @@ def all_signals(study_id: str) -> Response:
 
         except PermissionError:
             return FORBIDDEN
+
+        except FileNotFoundError as err:
+            return _bad_request_error(err.args)
 
         except Exception as err:
             return _internal_server_error(err.args)
