@@ -3,6 +3,7 @@ import { apiRequest, keyCheck, postApiReqiest } from "../../../../utils/api";
 import styles from "../../../../styles/Home.module.css"
 import { useRouter } from "next/router";
 import { HelpModal } from "../../../../utils/HelpModal";
+import { Trash } from "react-bootstrap-icons";
 
 const helpText = "This page will help you create a new signal for the study. Firstly, select \
 a template, and then a tempalte subtype, and fill out the parts of the form you want. Then click submit."
@@ -51,7 +52,7 @@ const NewSignal = () => {
             "type": "expression", // first to load
             "data": "",
             "tag": "",
-            "linkingattribute": [],
+            "linkingattribute": ["Sample Source ID"],
             "metadata": fields.reduce((xs, x) => ({...xs, [x]: ""}), {})
         })
     }
@@ -135,23 +136,33 @@ const NewSignal = () => {
                             })}}
                         />
                         <br />
-                        <label htmlFor="linking-attribute">Linking attribute</label>
+                        <label htmlFor="linking-attribute">Linking Attributes</label>
                         {newSignal.linkingattribute.map((val, idx) => (
+                            <div className="form-control" key={`linking-${idx}-${val}`}>
                             <input
                                 type="text"
-                                key={`linking-${idx}`}
-                                className="form-control"
                                 defaultValue={val}
-                                onChange={e => {
+                                onBlur={e => {
                                     var tmp_links = newSignal.linkingattribute;
                                     tmp_links[idx] = e.target.value;
                                     setNewSignal({...newSignal, "linkingattribute": tmp_links})
                                 }}
                             />
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-danger"
+                                onClick={() => {
+                                    var tmp = newSignal.linkingattribute;
+                                    tmp.splice(idx, 1)
+                                    setNewSignal({...newSignal, "linkingattribute": tmp})
+                                }}
+                            ><Trash /></button>
+                            </div>
                         ))}
                         <button type="button" className="btn btn-sm btn-secondary"
                             onClick={() => {setNewSignal({...newSignal, "linkingattribute": [...newSignal.linkingattribute, ""]})}}
                             >Add</button>
+                        <br />
                     </div>
                 )}
                 {templateFields.map(e => (
