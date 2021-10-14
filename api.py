@@ -60,9 +60,12 @@ def _not_found(err: T.Any) -> Response:
 @api_blueprint.route("", methods=["GET"])
 def api_version() -> Response:
     """
-        Default API endpoint, returns the software version
+        Default API endpoint, returns the software version and server
     """
-    return _create_response({"version": config.VERSION})
+    return _create_response({
+        "version": config.VERSION,
+        "server": config.SERVER_ENDPOINT
+    })
 
 
 @api_blueprint.route("/studies", methods=["GET", "POST"])
