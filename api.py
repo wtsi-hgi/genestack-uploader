@@ -131,20 +131,15 @@ def all_studies() -> Response:
     return METHOD_NOT_ALLOWED
 
 
-@api_blueprint.route("/studies/<study_id>", methods=["GET", "POST"])
+@api_blueprint.route("/studies/<study_id>", methods=["GET"])
 def single_study(study_id: str) -> Response:
     """
         GET: return information about single study
-        POST: update a single study
     """
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
-
-    if flask.request.method == "POST":
-        # TODO
-        return NOT_IMPLEMENTED
 
     if flask.request.method == "GET":
         study: T.Optional[requests.Response] = None
@@ -201,7 +196,10 @@ def all_signals(study_id: str) -> Response:
         except PermissionError:
             return FORBIDDEN
 
-        except FileNotFoundError as err:
+        except (
+            FileNotFoundError,
+            uploadtogenestack.genestackassist.LinkingNotPossibleError
+        ) as err:
             return _bad_request_error(err.args)
 
         except Exception as err:
@@ -227,19 +225,15 @@ def all_signals(study_id: str) -> Response:
     return METHOD_NOT_ALLOWED
 
 
-@api_blueprint.route("/studies/<study_id>/signals/<signal_id>", methods=["GET", "POST"])
+@api_blueprint.route("/studies/<study_id>/signals/<signal_id>", methods=["GET"])
 def single_signal(study_id: str, signal_id: str) -> Response:
     """
         GET: get information about single dataset
-        POST: update a single dataset
     """
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
         return MISSING_TOKEN
-
-    if flask.request.method == "POST":
-        return NOT_IMPLEMENTED
 
     if flask.request.method == "GET":
         try:
