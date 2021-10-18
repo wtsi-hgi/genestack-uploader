@@ -6,6 +6,7 @@ from json.decoder import JSONDecodeError
 import time
 import typing as T
 
+import botocore
 import flask
 import requests
 import uploadtogenestack
@@ -99,11 +100,11 @@ def all_studies() -> Response:
                 tmp_tsv.write("\t".join(body.values()) + "\n")
 
             # Getting Data from S3
-            s3_bucket.download_file(sample_file, f"/tmp/{sample_file}")
+            s3_bucket.download_file(sample_file, f"/tmp/{sample_file.replace('/', '_')}")
 
             study = uploadtogenestack.genestackstudy(
                 studyname=body["Study Title"],
-                samplefile=f"/tmp/{sample_file}",
+                samplefile=f"/tmp/{sample_file.replace('/', '_')}",
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
                 studymetadata=tmp_fp
@@ -116,6 +117,9 @@ def all_studies() -> Response:
 
         except PermissionError:
             return FORBIDDEN
+
+        except botocore.exceptions.ClientError:
+            return _create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
             return _internal_server_error(err.args)
@@ -194,8 +198,8 @@ def all_signals(study_id: str) -> Response:
         body["metadata"] = tmp_fp
 
         # Downloading S3 File
-        s3_bucket.download_file(body["data"], f"/tmp/{body['data']}")
-        body["data"] = f"/tmp/{body['data']}"
+        s3_bucket.download_file(body["data"], f"/tmp/{body['data'].replace('/', '_')}")
+        body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
 
         try:
             uploadtogenestack.genestackstudy(
@@ -231,6 +235,9 @@ def all_signals(study_id: str) -> Response:
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
+
+        except botocore.exceptions.ClientError:
+            return _create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
             return _internal_server_error(err.args)
