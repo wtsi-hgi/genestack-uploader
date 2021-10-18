@@ -39,7 +39,7 @@ const Study = () => {
         <div className={styles.main}>
             <h1>{studyData["Study Source"]}</h1>
 
-            <Link href="/"><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
+            <Link href={`${process.env.NEXT_PUBLIC_HOST}/`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
@@ -63,7 +63,7 @@ const Study = () => {
                 <div className={styles.flexColumn}>
                     <h3>Signals</h3>
                     <a href={`/studies/${studyId}/signals`}>New Signal</a>
-                    {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
+                    {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
                 </div>
             </div>
         </div>

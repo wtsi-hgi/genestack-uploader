@@ -54,7 +54,7 @@ const NewStudy = () => {
         <div className={styles.main}>
             <h1>New Study</h1>
 
-            <Link href="/"><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
+            <Link href={`${process.env.NEXT_PUBLIC_HOST}/`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="New Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}}/>
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
@@ -93,7 +93,7 @@ const NewStudy = () => {
             {successfulRequest == "SUCCESS" && (<div className="alert alert-success">Success</div>)}
             {successfulRequest == "FAIL" && (<div className="alert alert-warning">Fail</div>)}
             {apiError != "" && (<code>{apiError}</code>)}
-            {createdStudyAccession != "" && (<a href={`/studies/${createdStudyAccession}`}>Go to New Study</a>)}
+            {createdStudyAccession != "" && (<a href={`${process.env.NEXT_PUBLIC_HOST}/studies/${createdStudyAccession}`}>Go to New Study</a>)}
         </div>
     )
 }

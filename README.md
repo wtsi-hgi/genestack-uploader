@@ -4,13 +4,15 @@ A HTTP server providing an API and a frontend for easy uploading to Genestack
 
 ## Running with Docker 🐳
 
-1. Build the image, i.e.
+1. Copy `frontend/.env` to `frontend/.env.local`, and update it if needed
+
+2. Build the image, i.e.
 
 ```
 docker build -t genestack_uploader .
 ```
 
-2. Run the image. You must export port 5000 and provide the env variable `GSSERVER` with a value of either `qc` or `default`, i.e.
+3. Run the image. You must export port 5000 and provide the env variable `GSSERVER` with a value of either `qc` or `default`, i.e.
 
 ```
 docker run -p 80:5000 -e GSSERVER=default -d genestack_uploader

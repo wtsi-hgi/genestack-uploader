@@ -33,14 +33,13 @@ export default function Home() {
   }, [])
 
   const goToStudy = () => {
-    window.location = `/studies/${selectedStudy}`
+    window.location = `${process.env.NEXT_PUBLIC_HOST}/studies/${selectedStudy}`
   }
 
   return (
     <div className={styles.container}>
       <Head>
         <title>Genestack Uploader</title>
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>

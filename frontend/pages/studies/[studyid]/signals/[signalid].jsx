@@ -34,7 +34,7 @@ const Signal = () => {
         <div className={styles.main}>
             <h1>{signalId}</h1>
 
-            <Link href={`/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
+            <Link href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
             <HelpModal header="Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
