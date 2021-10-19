@@ -36,4 +36,4 @@ RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtog
 COPY . .
 COPY --from=webBuild /app/out frontend/out
 
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
+CMD ["waitress-serve", "--call", "app:production"]

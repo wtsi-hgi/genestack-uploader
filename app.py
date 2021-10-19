@@ -3,6 +3,7 @@
 """
 
 import flask
+import waitress
 
 from api import api_blueprint
 
@@ -39,6 +40,11 @@ def _signal_index(_):
 def _signals_id(**_):
     return flask.send_from_directory(
         app.static_folder + "/studies/[studyid]/signals", "[signalid].html")
+
+
+def production():
+    """Run in production with waitress"""
+    waitress.serve(app, host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,8 @@ import uploadtogenestack
 
 import config
 
-gs_config = uploadtogenestack.genestackstudy.getGSconfig(config.GENESTACK_SERVER)
+gs_config = uploadtogenestack.genestackstudy.getGSconfig(
+    config.GENESTACK_SERVER)
 s3_bucket = uploadtogenestack.s3bucketutils(gs_config["genestackbucket"])
 
 api_blueprint = flask.Blueprint("api", "api")
@@ -100,7 +101,8 @@ def all_studies() -> Response:
                 tmp_tsv.write("\t".join(body.values()) + "\n")
 
             # Getting Data from S3
-            s3_bucket.download_file(sample_file, f"/tmp/{sample_file.replace('/', '_')}")
+            s3_bucket.download_file(
+                sample_file, f"/tmp/{sample_file.replace('/', '_')}")
 
             study = uploadtogenestack.genestackstudy(
                 studyname=body["Study Title"],
@@ -189,7 +191,7 @@ def all_signals(study_id: str) -> Response:
         body: T.Dict[str, T.Any] = flask.request.json
         body["linkingattribute"] = [{"column": x}
                                     for x in body["linkingattribute"]]
-        
+
         # Creating Metadata TSV
         tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
         with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
@@ -198,7 +200,8 @@ def all_signals(study_id: str) -> Response:
         body["metadata"] = tmp_fp
 
         # Downloading S3 File
-        s3_bucket.download_file(body["data"], f"/tmp/{body['data'].replace('/', '_')}")
+        s3_bucket.download_file(
+            body["data"], f"/tmp/{body['data'].replace('/', '_')}")
         body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
 
         try:
