@@ -1,5 +1,5 @@
 export const apiRequest = async (endpoint, ignore_unauth = false) => {
-    const r = await fetch(`/api/${endpoint}`, {
+    const r = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/${endpoint}`, {
         headers: {
             "Genestack-API-Token": localStorage.getItem("Genestack-API-Token")
         }
