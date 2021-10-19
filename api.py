@@ -188,23 +188,22 @@ def all_signals(study_id: str) -> Response:
         return MISSING_TOKEN
 
     if flask.request.method == "POST":
-        body: T.Dict[str, T.Any] = flask.request.json
-        body["linkingattribute"] = [{"column": x}
-                                    for x in body["linkingattribute"]]
-
-        # Creating Metadata TSV
-        tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
-        with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
-            tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
-            tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
-        body["metadata"] = tmp_fp
-
-        # Downloading S3 File
-        s3_bucket.download_file(
-            body["data"], f"/tmp/{body['data'].replace('/', '_')}")
-        body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
-
         try:
+            body: T.Dict[str, T.Any] = flask.request.json
+            body["linkingattribute"] = [{"column": x}
+                                        for x in body["linkingattribute"]]
+
+            # Creating Metadata TSV
+            tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+            with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
+                tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
+            body["metadata"] = tmp_fp
+
+            # Downloading S3 File
+            s3_bucket.download_file(
+                body["data"], f"/tmp/{body['data'].replace('/', '_')}")
+            body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
             uploadtogenestack.genestackstudy(
                 study_genestackaccession=study_id,
                 genestackserver=config.GENESTACK_SERVER,
@@ -222,6 +221,9 @@ def all_signals(study_id: str) -> Response:
         ) as err:
             return _bad_request_error(err.args)
 
+        except botocore.exceptions.ClientError:
+            return _create_response({"error": "S3 bucket permission denied"}, 403)
+
         except Exception as err:
             return _internal_server_error(err.args)
 
@@ -238,9 +240,6 @@ def all_signals(study_id: str) -> Response:
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return _not_found(err)
-
-        except botocore.exceptions.ClientError:
-            return _create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
             return _internal_server_error(err.args)
