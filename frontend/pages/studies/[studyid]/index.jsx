@@ -62,7 +62,7 @@ const Study = () => {
             
                 <div className={styles.flexColumn}>
                     <h3>Signals</h3>
-                    <a href={`/studies/${studyId}/signals`}>New Signal</a>
+                    <a href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}/signals`}>New Signal</a>
                     {signalData.map((e) => (<a key={`signal-${e.itemId}`} href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}/signals/${e.itemId}`}>{e.itemId}</a>))}
                 </div>
             </div>

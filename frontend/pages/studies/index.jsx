@@ -29,10 +29,10 @@ const NewStudy = () => {
 
     const loadTemplate = () => {
         apiRequest(`templates/${selectedTemplate}`).then(t => {
-            var fields = t.data.template.filter(e => !e.isReadOnly && e.dataType == "study").map(e => e.name)
-            fields.unshift("Sample File")
+            var fields = t.data.template.filter(e => !e.isReadOnly && e.dataType == "study").map(e => ({"name": e.name , "required": e.isRequired}))
+            fields.unshift({"name": "Sample File", "required": true})
             setTemplateFields(fields)
-            setNewStudy(fields.reduce((xs, x) => ({...xs, [x]: ""}), {}))
+            setNewStudy(fields.reduce((xs, x) => ({...xs, [x.name]: ""}), {}))
         })
     }
 
@@ -75,13 +75,22 @@ const NewStudy = () => {
             <br />
             <form>
                 {templateFields.map(e => (
-                    <div key={e} className="form-group">
-                        <label htmlFor={e}>{e}</label>
+                    <div key={e.name} className="form-group">
+                        <label htmlFor={e.name}>{e.name}</label>
                         <input
                             type="text"
-                            className="form-control"
-                            name={e}
-                            onChange={event => {setNewStudy({...newStudy, [e]: event.target.value})}}
+                            className={`form-control ${e.required && "is-invalid"}`}
+                            name={e.name}
+                            onChange={event => {
+                                setNewStudy({...newStudy, [e.name]: event.target.value})
+                                if (event.target.value != "") {
+                                    event.target.classList.remove("is-invalid")
+                                } else {
+                                    if (e.required) {
+                                        event.target.classList.add("is-invalid")
+                                    }
+                                }
+                            }}
                         />
                         <br />
                     </div>

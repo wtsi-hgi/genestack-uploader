@@ -46,7 +46,7 @@ const NewSignal = () => {
     }
 
     const loadTemplateSubtype = () => {
-        var fields = fullTemplateFields.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => e.name)
+        var fields = fullTemplateFields.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => ({"name": e.name, "required": e.isRequired}))
         setTemplateFields(fields)
         setSelectedTemplateSubtype(fields[0])
         setNewSignal({
@@ -54,7 +54,7 @@ const NewSignal = () => {
             "data": "",
             "tag": "",
             "linkingattribute": ["Sample Source ID"],
-            "metadata": fields.reduce((xs, x) => ({...xs, [x]: ""}), {})
+            "metadata": fields.reduce((xs, x) => ({...xs, [x.name]: ""}), {})
         })
     }
 
@@ -120,23 +120,35 @@ const NewSignal = () => {
                         <label htmlFor="signal-data">Data</label>
                         <input 
                             type="text" 
-                            className="form-control"
+                            className="form-control is-invalid"
                             name="signal-data"
                             onChange={event => {setNewSignal({
-                                ...newSignal,
-                                "data": event.target.value
-                            })}}
+                                    ...newSignal,
+                                    "data": event.target.value
+                                })
+                                if (event.target.value != "") {
+                                    event.target.classList.remove("is-invalid")
+                                } else {
+                                    event.target.classList.add("is-invalid")
+                                }
+                        }}
                         />
                         <br />
                         <label htmlFor="signal-tag">Tag</label>
                         <input
                             type="text"
-                            className="form-control"
+                            className="form-control is-invalid"
                             name="signal-tag"
                             onChange={event => {setNewSignal({
-                                ...newSignal,
-                                "tag": event.target.value
-                            })}}
+                                    ...newSignal,
+                                    "tag": event.target.value
+                                })
+                                if (event.target.value != "") {
+                                    event.target.classList.remove("is-invalid")
+                                } else {
+                                    event.target.classList.add("is-invalid")
+                                }
+                        }}
                         />
                         <br />
                         <label htmlFor="linking-attribute">Linking Attributes</label>
@@ -169,19 +181,27 @@ const NewSignal = () => {
                     </div>
                 )}
                 {templateFields.map(e => (
-                    <div key={e} className="form-group">
-                        <label htmlFor={e}>{e}</label>
+                    <div key={e.name} className="form-group">
+                        <label htmlFor={e.name}>{e.name}</label>
                         <input
                             type="text"
-                            className="form-control"
-                            name={e}
+                            className={`form-control ${e.required && "is-invalid"}`}
+                            name={e.name}
                             onChange={event => {setNewSignal({
-                                ...newSignal,
-                                "metadata": {
-                                    ...newSignal.metadata,
-                                    [e]: event.target.value
+                                    ...newSignal,
+                                    "metadata": {
+                                        ...newSignal.metadata,
+                                        [e.name]: event.target.value
+                                    }
+                                })
+                                if (event.target.value != "") {
+                                    event.target.classList.remove("is-invalid")
+                                } else {
+                                    if (e.required) {
+                                        event.target.classList.add("is-invalid")
+                                    }
                                 }
-                            })}}
+                        }}
                         />
                         <br />
                     </div>
