@@ -15,7 +15,6 @@ const NewSignal = () => {
     const [studyId, setStudyId] = useState("");
     const [templates, setTemplates] = useState([]);
     const [selectedTemplate, setSelectedTemplate] = useState("");
-    const [fullTemplateFields, setFullTemplateFields] = useState([]);
     const [templateSubtypes, setTemplateSubtypes] = useState([]);
     const [selectedTemplateSubtype, setSelectedTemplateSubtype] = useState("");
     const [templateFields, setTemplateFields] = useState([]);
@@ -36,25 +35,23 @@ const NewSignal = () => {
                 setSelectedTemplate(templates[0].accession);
             })
         }
+
+        apiRequest("templateTypes").then((t) => {
+            setTemplateSubtypes(t.data.map(e => ({"name": e.displayName, "type": e.dataType})))
+        })
     }, [router.query])
 
     const loadTemplate = () => {
         apiRequest(`templates/${selectedTemplate}`).then(t => {
-            setFullTemplateFields(t.data.template)
-            setTemplateSubtypes([...new Set(t.data.template.map(e => e.dataType))]);
-        })
-    }
-
-    const loadTemplateSubtype = () => {
-        var fields = fullTemplateFields.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => ({"name": e.name, "required": e.isRequired}))
-        setTemplateFields(fields)
-        setSelectedTemplateSubtype(fields[0])
-        setNewSignal({
-            "type": "expression", // first to load
-            "data": "",
-            "tag": "",
-            "linkingattribute": ["Sample Source ID"],
-            "metadata": fields.reduce((xs, x) => ({...xs, [x.name]: ""}), {})
+            var fields = t.data.template.filter(e => !e.isReadOnly && e.dataType == selectedTemplateSubtype).map(e => ({"name": e.name, "required": e.isRequired}))
+            setNewSignal({
+                "type": selectedTemplateSubtype, // first to load
+                "data": "",
+                "tag": "",
+                "linkingattribute": ["Sample Source ID"],
+                "metadata": fields.reduce((xs, x) => ({...xs, [x.name]: ""}), {})
+            })
+            setTemplateFields(fields)
         })
     }
 
@@ -88,6 +85,16 @@ const NewSignal = () => {
                         onChange={e => {setSelectedTemplate(e.target.value)}}>
                         {templates.map(e => (<option key={e.accession} value={e.accession}>{e.name}</option>))}
                     </select>
+                </div>
+            </form>
+            <br />
+            <form>
+                <div className="form-group">
+                    <label htmlFor="select-template-subtype">Select Type</label>
+                    <select className="form-select" name="select-template-subtype"
+                        onChange={e => {setSelectedTemplateSubtype(e.target.value)}}>
+                        {templateSubtypes.map(e => (<option key={`subtype-${e.name}`} value={e.type}>{e.name}</option>))}
+                    </select>
                     <br />
                     <button type="button" className="btn btn-primary"
                         onClick={loadTemplate}>Load Template</button>
@@ -95,28 +102,8 @@ const NewSignal = () => {
             </form>
             <br />
             <form>
-                {templateSubtypes.length != 0 && <div className="form-group">
-                    <label htmlFor="select-template-subtype">Select Template Subtype</label>
-                    <select className="form-select" name="select-template-subtype"
-                        onChange={e => {setSelectedTemplateSubtype(e.target.value)}}>
-                        {templateSubtypes.map(e => (<option key={`subtype-${e}`} value={e}>{e}</option>))}
-                    </select>
-                    <br />
-                    <button type="button" className="btn btn-primary"
-                        onClick={loadTemplateSubtype}>Load Template Subtype</button>
-                </div>}
-            </form>
-            <br />
-            <form>
                 {templateFields.length != 0 && (
                     <div className="form-group">
-                        <label htmlFor="select-signal-type">Signal Type</label>
-                        <select className="form-select" name="select-signal-type"
-                            onChange={(e) => setNewSignal({...newSignal, "type": e.target.value})}>
-                            <option value="expression">Expression</option>
-                            <option value="variant">Variant</option>
-                        </select>
-                        <br />
                         <label htmlFor="signal-data">Data</label>
                         <input 
                             type="text" 
