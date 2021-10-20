@@ -35,13 +35,13 @@ const NewSignal = () => {
         setTemplates(templates);
         setSelectedTemplate(templates[0].accession);
       });
-    }
 
-    apiRequest("templateTypes").then((t) => {
-      setTemplateSubtypes(
-        t.data.map((e) => ({ name: e.displayName, type: e.dataType }))
-      );
-    });
+      apiRequest("templateTypes").then((t) => {
+        setTemplateSubtypes(
+          t.data.map((e) => ({ name: e.displayName, type: e.dataType }))
+        );
+      });
+    }
   }, [router.query]);
 
   const loadTemplate = () => {
@@ -50,7 +50,7 @@ const NewSignal = () => {
         .filter((e) => !e.isReadOnly && e.dataType == selectedTemplateSubtype)
         .map((e) => ({ name: e.name, required: e.isRequired }));
       setNewSignal({
-        type: selectedTemplateSubtype, // first to load
+        type: selectedTemplateSubtype,
         data: "",
         tag: "",
         linkingattribute: ["Sample Source ID"],
