@@ -18,16 +18,16 @@ export default function Home() {
 
   const [studies, setStudies] = useState([]);
   const [selectedStudy, setSelectedStudy] = useState("");
-  const [unauthorisedWarning, setUnauthorisedWarning] = useState(false);
+  const [unauthorisedWarning, setUnauthorisedWarning] = useState("");
 
   const authenticate = (ignore_unauth) => {
-    localStorage.setItem("unauthorised", false);
-    !ignore_unauth && setUnauthorisedWarning(false);
+    localStorage.setItem("unauthorised", "");
+    !ignore_unauth && setUnauthorisedWarning("");
     studyNames(ignore_unauth).then((names) => {setStudies(names)})
   }
 
   useEffect(() => {
-    setUnauthorisedWarning(localStorage.getItem("unauthorised") == "true")
+    setUnauthorisedWarning(localStorage.getItem("unauthorised"))
     setStudies([])
     authenticate(true)
   }, [])
@@ -51,8 +51,8 @@ export default function Home() {
           Easily upload new studies to Genestack
         </p>
 
-        {unauthorisedWarning && <div className="alert alert-danger">
-          Unauthorised
+        {unauthorisedWarning != "" && <div className="alert alert-danger">
+          {unauthorisedWarning}
         </div>}
 
         <div className="form-group">
