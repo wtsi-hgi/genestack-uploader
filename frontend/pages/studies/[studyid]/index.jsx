@@ -6,6 +6,7 @@ import { HelpModal } from "../../../utils/HelpModal";
 import { ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { viewStudyHelpText } from "../../../utils/helpText";
+import Head from "next/head";
 
 const Study = () => {
   const router = useRouter();
@@ -35,6 +36,9 @@ const Study = () => {
 
   return (
     <div className={styles.main}>
+      <Head>
+        <title>{studyData["Study Source"]} | Genestack Uploader</title>
+      </Head>
       <h1>{studyData["Study Source"]}</h1>
 
       <Link href={`${process.env.NEXT_PUBLIC_HOST}/`}>

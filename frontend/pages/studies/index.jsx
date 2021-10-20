@@ -5,6 +5,7 @@ import { HelpModal } from "../../utils/HelpModal";
 import { ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { studiesIndexHelpText } from "../../utils/helpText";
+import Head from "next/head";
 
 const NewStudy = () => {
   const [templates, setTemplates] = useState([]);
@@ -57,6 +58,9 @@ const NewStudy = () => {
 
   return (
     <div className={styles.main}>
+      <Head>
+        <title>New Study | Genestack Uploader</title>
+      </Head>
       <h1>New Study</h1>
 
       <Link href={`${process.env.NEXT_PUBLIC_HOST}/`}>

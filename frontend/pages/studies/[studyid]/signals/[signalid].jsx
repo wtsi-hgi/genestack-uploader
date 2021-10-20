@@ -6,6 +6,7 @@ import { HelpModal } from "../../../../utils/HelpModal";
 import { ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { viewSignalHelpText } from "../../../../utils/helpText";
+import Head from "next/head";
 
 const Signal = () => {
   const router = useRouter();
@@ -31,6 +32,9 @@ const Signal = () => {
 
   return (
     <div className={styles.main}>
+      <Head>
+        <title>{signalId} | Genestack Uploader</title>
+      </Head>
       <h1>{signalId}</h1>
 
       <Link href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}`}>
