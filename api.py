@@ -333,3 +333,29 @@ def get_template(template_id: str):
 
         except Exception as err:
             return _internal_server_error(err.args)
+
+
+@api_blueprint.route("/templateTypes", methods=["GET"])
+def get_template_types():
+    """
+        Gets the display names and datatypes for templates
+        to make it more presentable to the user
+    """
+
+    token: str = flask.request.headers.get("Genestack-API-Token")
+    if not token:
+        return MISSING_TOKEN
+
+    if flask.request.method == "GET":
+        try:
+            gsu = uploadtogenestack.genestack_utils(
+                token=token, server=config.SERVER_ENDPOINT
+            )
+            types = gsu.ApplicationsODM(gsu, None).get_template_types()
+            return _create_response(types.json()["result"])
+
+        except PermissionError:
+            return FORBIDDEN
+
+        except Exception as err:
+            return _internal_server_error(err.args)

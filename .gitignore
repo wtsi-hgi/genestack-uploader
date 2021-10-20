@@ -3,6 +3,7 @@ typings
 .vscode
 
 test_upload_tmp
+test.json
 make_samples.py
 *.tsv
 uploadinfo.json
