@@ -5,8 +5,7 @@ import styles from '../../../../styles/Home.module.css'
 import { HelpModal } from "../../../../utils/HelpModal";
 import { ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link";
-
-const helpText = "This page will allow you to view the metadata for this signal."
+import { viewSignalHelpText } from "../../../../utils/helpText";
 
 const Signal = () => {
     const router = useRouter();
@@ -36,7 +35,7 @@ const Signal = () => {
 
             <Link href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
-            <HelpModal header="Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
+            <HelpModal header="Signal" helpText={viewSignalHelpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
             <br />
 

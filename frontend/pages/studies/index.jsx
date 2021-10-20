@@ -4,9 +4,8 @@ import {useEffect, useState} from "react"
 import {HelpModal} from "../../utils/HelpModal"
 import { ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link"
+import { studiesIndexHelpText } from "../../utils/helpText";
 
-const helpText = "Using this page, you can create a new study. First, select the template you wish to use, and \
-load it. Then, fill out the boxes you want, and click submit at the bottom."
 
 const NewStudy = () => {
     const [templates, setTemplates] = useState([]);
@@ -56,7 +55,7 @@ const NewStudy = () => {
 
             <Link href={`${process.env.NEXT_PUBLIC_HOST}/`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
-            <HelpModal header="New Study" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}}/>
+            <HelpModal header="New Study" helpText={studiesIndexHelpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}}/>
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
             <br />
             

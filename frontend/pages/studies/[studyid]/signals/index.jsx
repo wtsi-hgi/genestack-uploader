@@ -5,9 +5,7 @@ import { useRouter } from "next/router";
 import { HelpModal } from "../../../../utils/HelpModal";
 import { Trash, ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link"
-
-const helpText = "This page will help you create a new signal for the study. Firstly, select \
-a template, and then a tempalte subtype, and fill out the parts of the form you want. Then click submit."
+import { signalsIndexHelpText } from "../../../../utils/helpText";
 
 const NewSignal = () => {
     const router = useRouter();
@@ -74,7 +72,7 @@ const NewSignal = () => {
 
             <Link href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyId}`}><a className={styles.backButton}><ArrowLeftCircle /></a></Link>
 
-            <HelpModal header="New Signal" helpText={helpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
+            <HelpModal header="New Signal" helpText={signalsIndexHelpText} show={showHelpModal} handleClose={() => {setShowHelpModal(false)}} />
             <button type="button" className="btn btn-info btn-sm" onClick={() => {setShowHelpModal(true)}}>Help</button>
             <br />
 
