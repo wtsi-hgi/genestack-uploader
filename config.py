@@ -3,7 +3,7 @@
 """
 import os
 
-VERSION = "0.0.1"
+VERSION = "0.4"
 
 GENESTACK_SERVER = os.environ["GSSERVER"]
 assert GENESTACK_SERVER in ["default", "qc"]

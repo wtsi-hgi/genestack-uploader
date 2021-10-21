@@ -1,9 +1,14 @@
 export const apiRequest = async (endpoint, ignore_unauth = false) => {
-  const r = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/${endpoint}`, {
-    headers: {
-      "Genestack-API-Token": localStorage.getItem("Genestack-API-Token"),
-    },
-  });
+  const r = await fetch(
+    `${process.env.NEXT_PUBLIC_HOST}/api${
+      endpoint != "" ? "/" : ""
+    }${endpoint}`,
+    {
+      headers: {
+        "Genestack-API-Token": localStorage.getItem("Genestack-API-Token"),
+      },
+    }
+  );
   if ((r.status == 403 || r.status == 401) && !ignore_unauth) {
     localStorage.setItem("unauthorised", "Unauthorised");
     window.location = process.env.NEXT_PUBLIC_HOST + "/";

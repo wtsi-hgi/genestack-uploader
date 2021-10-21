@@ -21,6 +21,9 @@ export default function Home() {
   const [selectedStudy, setSelectedStudy] = useState("");
   const [unauthorisedWarning, setUnauthorisedWarning] = useState("");
 
+  const [softwareVersion, setSoftwareVersion] = useState("");
+  const [genestackServer, setGenestackServer] = useState("");
+
   const authenticate = (ignore_unauth) => {
     localStorage.setItem("unauthorised", "");
     !ignore_unauth && setUnauthorisedWarning("");
@@ -33,6 +36,11 @@ export default function Home() {
     setUnauthorisedWarning(localStorage.getItem("unauthorised"));
     setStudies([]);
     authenticate(true);
+
+    apiRequest("").then((d) => {
+      setSoftwareVersion(d.data.version);
+      setGenestackServer(d.data.server);
+    });
   }, []);
 
   const goToStudy = () => {
@@ -102,7 +110,11 @@ export default function Home() {
       </main>
 
       <footer className={styles.footer}>
-        <small>Contact HGI for help.</small>
+        <small>
+          <code>
+            Software Version: {softwareVersion} | Server: {genestackServer}
+          </code>
+        </small>
       </footer>
     </div>
   );

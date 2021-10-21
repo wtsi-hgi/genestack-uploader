@@ -14,6 +14,8 @@ docker build -t mercury/genestack-uploader:0.1.dev .
 
 The tagging scheme used on this project is `mercury/genestack-uploader:X.Y.{prod|dev}`, where X.Y is the version number, and the final tag is `prod` or `dev`, describing which URL is specified in `.env`
 
+**Remember to update the version in `config.py` - this is displayed on the site**
+
 3. Run the image. You must:
     - provide the env variable `GSSERVER` with a value of either `qc` or `default`
     - link to config files `/root/.genestack.cfg` and `/root/.s3cfg`
