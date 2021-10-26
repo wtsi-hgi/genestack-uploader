@@ -62,6 +62,19 @@ const NewSignal = () => {
   };
 
   const submitSignal = async () => {
+    let requiredFields = ["data", "tag"]
+    let fieldsMissing = false;
+    requiredFields.forEach(e => {
+      if (newSignal[e] == "") {
+        fieldsMissing = true;
+      }
+    })
+
+    if (fieldsMissing) {
+      setApiError("Required Fields Missing")
+      return
+    }
+
     setSuccessfulRequest("LOADING");
     setApiError("");
     var [req_ok, req_info] = await postApiReqiest(

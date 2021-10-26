@@ -41,6 +41,19 @@ const NewStudy = () => {
   };
 
   const submitStudy = async () => {
+    let requiredFields = templateFields.filter(e => e.required)
+    let fieldsMissing = false;
+    requiredFields.forEach(e => {
+      if (newStudy[e.name] == "") {
+        fieldsMissing = true;
+      }
+    })
+
+    if (fieldsMissing) {
+      setApiError("Required Fields Missing")
+      return
+    }
+
     setSuccessfulRequest("LOADING");
     setApiError("");
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
