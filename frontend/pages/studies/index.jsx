@@ -2,7 +2,7 @@ import { apiRequest, keyCheck, postApiReqiest } from "../../utils/api";
 import styles from "../../styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { HelpModal } from "../../utils/HelpModal";
-import { ArrowLeftCircle } from "react-bootstrap-icons";
+import { ArrowLeftCircle, Trash } from "react-bootstrap-icons";
 import Link from "next/link";
 import { studiesIndexHelpText } from "../../utils/helpText";
 import Head from "next/head";
@@ -35,8 +35,8 @@ const NewStudy = () => {
         .filter((e) => !e.isReadOnly && e.dataType == "study")
         .map((e) => ({ name: e.name, required: e.isRequired }));
       fields.unshift({ name: "Sample File", required: true });
+      setNewStudy(fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {"renamedColumns": []}));
       setTemplateFields(fields);
-      setNewStudy(fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {}));
     });
   };
 
@@ -151,13 +151,64 @@ const NewStudy = () => {
           </div>
         ))}
         {templateFields.length != 0 && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={submitStudy}
-          >
-            Submit
-          </button>
+          <div>
+            <label>Rename Columns</label>
+            <br />
+            {newStudy.renamedColumns.map((val, idx) => (
+              <div className="form-control" key={`renaming-${idx}-${val}`}>
+                <input
+                  type="text"
+                  defaultValue={val}
+                  placeholder="Old"
+                  onBlur={(e) => {
+                    var tmp_renames = newStudy.renamedColumns;
+                    tmp_renames[idx] = e.target.value;
+                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                  }}
+                />
+                <input
+                  type="text"
+                  defaultValue={val}
+                  placeholder="New"
+                  onBlur={(e) => {
+                    var tmp_renames = newStudy.renamedColumns;
+                    tmp_renames[idx] = e.target.value;
+                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => {
+                    var tmp = newStudy.renamedColumns;
+                    tmp.splice(idx, 1);
+                    setNewStudy({...newStudy, renamedColumns: tmp});
+                  }}
+                >
+                  <Trash />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick = {() => {
+                setNewStudy({
+                  ...newStudy,
+                  renamedColumns: [...newStudy.renamedColumns, ""]
+                })
+              }}
+            >Add</button>
+            <br />
+            <br />
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={submitStudy}
+            >
+              Submit
+            </button>
+          </div>
         )}
       </form>
       <br />
