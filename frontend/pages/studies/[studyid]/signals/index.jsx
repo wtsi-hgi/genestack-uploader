@@ -62,17 +62,17 @@ const NewSignal = () => {
   };
 
   const submitSignal = async () => {
-    let requiredFields = ["data", "tag"]
+    let requiredFields = ["data", "tag"];
     let fieldsMissing = false;
-    requiredFields.forEach(e => {
+    requiredFields.forEach((e) => {
       if (newSignal[e] == "") {
         fieldsMissing = true;
       }
-    })
+    });
 
     if (fieldsMissing) {
-      setApiError("Required Fields Missing")
-      return
+      setApiError("Required Fields Missing");
+      return;
     }
 
     setSuccessfulRequest("LOADING");

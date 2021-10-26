@@ -35,23 +35,27 @@ const NewStudy = () => {
         .filter((e) => !e.isReadOnly && e.dataType == "study")
         .map((e) => ({ name: e.name, required: e.isRequired }));
       fields.unshift({ name: "Sample File", required: true });
-      setNewStudy(fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {"renamedColumns": []}));
+      setNewStudy(
+        fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {
+          renamedColumns: [],
+        })
+      );
       setTemplateFields(fields);
     });
   };
 
   const submitStudy = async () => {
-    let requiredFields = templateFields.filter(e => e.required)
+    let requiredFields = templateFields.filter((e) => e.required);
     let fieldsMissing = false;
-    requiredFields.forEach(e => {
+    requiredFields.forEach((e) => {
       if (newStudy[e.name] == "") {
         fieldsMissing = true;
       }
-    })
+    });
 
     if (fieldsMissing) {
-      setApiError("Required Fields Missing")
-      return
+      setApiError("Required Fields Missing");
+      return;
     }
 
     setSuccessfulRequest("LOADING");
@@ -155,7 +159,10 @@ const NewStudy = () => {
             <label>Rename Columns</label>
             <br />
             {newStudy.renamedColumns.map((val, idx) => (
-              <div className="form-control" key={`renaming-${idx}-${val.old}-${val.new}`}>
+              <div
+                className="form-control"
+                key={`renaming-${idx}-${val.old}-${val.new}`}
+              >
                 <input
                   type="text"
                   defaultValue={val.old}
@@ -163,7 +170,7 @@ const NewStudy = () => {
                   onBlur={(e) => {
                     var tmp_renames = newStudy.renamedColumns;
                     tmp_renames[idx].old = e.target.value;
-                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
                 />
                 <input
@@ -173,7 +180,7 @@ const NewStudy = () => {
                   onBlur={(e) => {
                     var tmp_renames = newStudy.renamedColumns;
                     tmp_renames[idx].new = e.target.value;
-                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
                 />
                 <button
@@ -182,7 +189,7 @@ const NewStudy = () => {
                   onClick={() => {
                     var tmp = newStudy.renamedColumns;
                     tmp.splice(idx, 1);
-                    setNewStudy({...newStudy, renamedColumns: tmp});
+                    setNewStudy({ ...newStudy, renamedColumns: tmp });
                   }}
                 >
                   <Trash />
@@ -192,13 +199,18 @@ const NewStudy = () => {
             <button
               type="button"
               className="btn btn-sm btn-secondary"
-              onClick = {() => {
+              onClick={() => {
                 setNewStudy({
                   ...newStudy,
-                  renamedColumns: [...newStudy.renamedColumns, {"old": "", "new": ""}]
-                })
+                  renamedColumns: [
+                    ...newStudy.renamedColumns,
+                    { old: "", new: "" },
+                  ],
+                });
               }}
-            >Add</button>
+            >
+              Add
+            </button>
             <br />
             <br />
             <button
