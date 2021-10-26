@@ -155,24 +155,24 @@ const NewStudy = () => {
             <label>Rename Columns</label>
             <br />
             {newStudy.renamedColumns.map((val, idx) => (
-              <div className="form-control" key={`renaming-${idx}-${val}`}>
+              <div className="form-control" key={`renaming-${idx}-${val.old}-${val.new}`}>
                 <input
                   type="text"
-                  defaultValue={val}
+                  defaultValue={val.old}
                   placeholder="Old"
                   onBlur={(e) => {
                     var tmp_renames = newStudy.renamedColumns;
-                    tmp_renames[idx] = e.target.value;
+                    tmp_renames[idx].old = e.target.value;
                     setNewStudy({...newStudy, renamedColumns: tmp_renames})
                   }}
                 />
                 <input
                   type="text"
-                  defaultValue={val}
+                  defaultValue={val.new}
                   placeholder="New"
                   onBlur={(e) => {
                     var tmp_renames = newStudy.renamedColumns;
-                    tmp_renames[idx] = e.target.value;
+                    tmp_renames[idx].new = e.target.value;
                     setNewStudy({...newStudy, renamedColumns: tmp_renames})
                   }}
                 />
@@ -195,7 +195,7 @@ const NewStudy = () => {
               onClick = {() => {
                 setNewStudy({
                   ...newStudy,
-                  renamedColumns: [...newStudy.renamedColumns, ""]
+                  renamedColumns: [...newStudy.renamedColumns, {"old": "", "new": ""}]
                 })
               }}
             >Add</button>
