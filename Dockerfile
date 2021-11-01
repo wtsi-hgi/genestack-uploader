@@ -16,7 +16,7 @@ WORKDIR /app
 RUN apt-get install make
 
 RUN wget https://github.com/samtools/bcftools/releases/download/1.13/bcftools-1.13.tar.bz2
-RUN tar  -xjf bcftools-1.13.tar.bz2
+RUN tar -xjf bcftools-1.13.tar.bz2
 
 WORKDIR /app/bcftools-1.13
 RUN ./configure --prefix=/app/bcftools
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY requirements.txt ./
 
 RUN pip3 install -r requirements.txt
-RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtogenestack#egg=uploadtogenestack
+RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtogenestack@2.0#egg=uploadtogenestack
 
 # Copying Python scripts, and built frontend
 COPY . .

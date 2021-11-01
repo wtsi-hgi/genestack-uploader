@@ -13,9 +13,9 @@ import uploadtogenestack
 
 import config
 
-gs_config = uploadtogenestack.genestackstudy.getGSconfig(
+gs_config = uploadtogenestack.GenestackStudy.get_gs_config(
     config.GENESTACK_SERVER)
-s3_bucket = uploadtogenestack.s3bucketutils(gs_config["genestackbucket"])
+s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
 
 api_blueprint = flask.Blueprint("api", "api")
 
@@ -104,7 +104,7 @@ def all_studies() -> Response:
             s3_bucket.download_file(
                 sample_file, f"/tmp/{sample_file.replace('/', '_')}")
 
-            study = uploadtogenestack.genestackstudy(
+            study = uploadtogenestack.GenestackStudy(
                 studyname=body["Study Title"],
                 samplefile=f"/tmp/{sample_file.replace('/', '_')}",
                 genestackserver=config.GENESTACK_SERVER,
@@ -117,7 +117,7 @@ def all_studies() -> Response:
         except KeyError as err:
             return _create_response({"error": f"missing key: {err}"}, 400)
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except botocore.exceptions.ClientError:
@@ -128,14 +128,14 @@ def all_studies() -> Response:
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             # Note: This doesn't take into account pagination
             # will return max. 2000 results
             studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
             return _create_response(studies.json()["data"])
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
@@ -157,12 +157,12 @@ def single_study(study_id: str) -> Response:
     if flask.request.method == "GET":
         study: T.Optional[requests.Response] = None
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
             return _create_response(study.json())
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except JSONDecodeError:
@@ -204,7 +204,7 @@ def all_signals(study_id: str) -> Response:
             s3_bucket.download_file(
                 body["data"], f"/tmp/{body['data'].replace('/', '_')}")
             body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
-            uploadtogenestack.genestackstudy(
+            uploadtogenestack.GenestackStudy(
                 study_genestackaccession=study_id,
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
@@ -212,7 +212,7 @@ def all_signals(study_id: str) -> Response:
             )
             return CREATED
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except (
@@ -229,13 +229,13 @@ def all_signals(study_id: str) -> Response:
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)]
             return _create_response({"studyAccession": study_id, "signals": signals})
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
@@ -259,7 +259,7 @@ def single_signal(study_id: str, signal_id: str) -> Response:
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)
@@ -270,7 +270,7 @@ def single_signal(study_id: str, signal_id: str) -> Response:
                 return _not_found(f"signal {signal_id} not found on study {study_id}")
             return _internal_server_error(("multiple signals found",))
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
@@ -294,12 +294,12 @@ def get_all_templates():
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
             return _create_response(template.json()["result"])
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
@@ -319,7 +319,7 @@ def get_template(template_id: str):
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(
                 gsu, None).get_template_detail(template_id)
@@ -328,7 +328,7 @@ def get_template(template_id: str):
                 "template": template.json()["result"]
             })
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
@@ -348,13 +348,13 @@ def get_template_types():
 
     if flask.request.method == "GET":
         try:
-            gsu = uploadtogenestack.genestack_utils(
+            gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT
             )
             types = gsu.ApplicationsODM(gsu, None).get_template_types()
             return _create_response(types.json()["result"])
 
-        except PermissionError:
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
