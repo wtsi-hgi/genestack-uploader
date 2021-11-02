@@ -48,10 +48,10 @@ const NewSignal = () => {
   const loadTemplate = () => {
     apiRequest(`templates/${selectedTemplate}`).then((t) => {
       var fields = t.data.template
-        .filter((e) => !e.isReadOnly && e.dataType == selectedTemplateSubtype)
+        .filter((e) => !e.isReadOnly && e.dataType == JSON.parse(selectedTemplateSubtype).type)
         .map((e) => ({ name: e.name, required: e.isRequired }));
       setNewSignal({
-        type: selectedTemplateSubtype,
+        type: JSON.parse(selectedTemplateSubtype).name.toLowerCase(),
         data: "",
         tag: "",
         linkingattribute: ["Sample Source ID"],
@@ -154,7 +154,7 @@ const NewSignal = () => {
             }}
           >
             {templateSubtypes.map((e) => (
-              <option key={`subtype-${e.name}`} value={e.type}>
+              <option key={`subtype-${e.name}`} value={JSON.stringify(e)}>
                 {e.name}
               </option>
             ))}

@@ -94,6 +94,8 @@ def all_studies() -> Response:
             if "Study Title" not in body:
                 body["Study Title"] = body["Study Source"]
 
+            del body["renamedColumns"]
+
             # Creating Metadata TSV
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
             with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
@@ -105,7 +107,6 @@ def all_studies() -> Response:
                 sample_file, f"/tmp/{sample_file.replace('/', '_')}")
 
             study = uploadtogenestack.GenestackStudy(
-                studyname=body["Study Title"],
                 samplefile=f"/tmp/{sample_file.replace('/', '_')}",
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
