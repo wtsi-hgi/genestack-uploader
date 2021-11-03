@@ -191,8 +191,8 @@ def all_signals(study_id: str) -> Response:
     if flask.request.method == "POST":
         try:
             body: T.Dict[str, T.Any] = flask.request.json
-            body["linkingattribute"] = [{"column": x}
-                                        for x in body["linkingattribute"]]
+            body["linkingattribute"] = [
+                {"column": x} for x in body["linkingattribute"] if x != "Sample Source ID"]
 
             # Creating Metadata TSV
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
