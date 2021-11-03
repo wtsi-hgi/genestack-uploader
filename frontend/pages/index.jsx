@@ -23,6 +23,7 @@ export default function Home() {
 
   const [softwareVersion, setSoftwareVersion] = useState("");
   const [genestackServer, setGenestackServer] = useState("");
+  const [packageVersion, setPackageVersion] = useState("");
 
   const authenticate = (ignore_unauth) => {
     localStorage.setItem("unauthorised", "");
@@ -40,6 +41,7 @@ export default function Home() {
     apiRequest("").then((d) => {
       setSoftwareVersion(d.data.version);
       setGenestackServer(d.data.server);
+      setPackageVersion(d.data.package);
     });
   }, []);
 
@@ -112,7 +114,7 @@ export default function Home() {
       <footer className={styles.footer}>
         <small>
           <code>
-            Software Version: {softwareVersion} | Server: {genestackServer}
+            Software Version: {softwareVersion} | Package Version: {packageVersion} | Server: {genestackServer}
           </code>
         </small>
       </footer>

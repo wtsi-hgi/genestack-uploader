@@ -2,6 +2,7 @@
     API Endpoints
 """
 
+import importlib.metadata
 from json.decoder import JSONDecodeError
 import time
 import typing as T
@@ -77,7 +78,8 @@ def api_version() -> Response:
     """
     return _create_response({
         "version": config.VERSION,
-        "server": config.SERVER_ENDPOINT
+        "server": config.SERVER_ENDPOINT,
+        "package": importlib.metadata.version("uploadtogenestack")
     })
 
 
