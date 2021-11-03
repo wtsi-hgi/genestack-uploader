@@ -38,20 +38,28 @@ METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
 CREATED = _create_response("Created", 201)
 
 
-def _internal_server_error(err: T.Tuple[T.Any, ...]):
+def _internal_server_error(err: Exception):
     """
         500 Internal Server Error Response
     """
 
-    return _create_response({"error": "internal server error", "detail": err}, 500)
+    return _create_response({
+        "error": "internal server error",
+        "name": err.__class__.__name__,
+        "detail": err.args
+    }, 500)
 
 
-def _bad_request_error(err: T.Tuple[T.Any, ...]):
+def _bad_request_error(err: Exception):
     """
         400 Bad Request Error Response
     """
 
-    return _create_response({"error": "bad request", "detail": err}, 400)
+    return _create_response({
+        "error": "bad request",
+        "name": err.__class__.__name__,
+        "detail": err.args
+    }, 400)
 
 
 @api_blueprint.app_errorhandler(404)
@@ -125,7 +133,7 @@ def all_studies() -> Response:
             return _create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     if flask.request.method == "GET":
         try:
@@ -140,7 +148,7 @@ def all_studies() -> Response:
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -172,7 +180,7 @@ def single_study(study_id: str) -> Response:
             raise
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -220,13 +228,13 @@ def all_signals(study_id: str) -> Response:
             FileNotFoundError,
             uploadtogenestack.genestackassist.LinkingNotPossibleError
         ) as err:
-            return _bad_request_error(err.args)
+            return _bad_request_error(err)
 
         except botocore.exceptions.ClientError:
             return _create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     if flask.request.method == "GET":
         try:
@@ -243,7 +251,7 @@ def all_signals(study_id: str) -> Response:
             return _not_found(err)
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -278,7 +286,7 @@ def single_signal(study_id: str, signal_id: str) -> Response:
             return _not_found(err)
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -304,7 +312,7 @@ def get_all_templates():
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
 
 @api_blueprint.route("/templates/<template_id>", methods=["GET"])
@@ -333,7 +341,7 @@ def get_template(template_id: str):
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
 
 
 @api_blueprint.route("/templateTypes", methods=["GET"])
@@ -359,4 +367,4 @@ def get_template_types():
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err.args)
+            return _internal_server_error(err)
