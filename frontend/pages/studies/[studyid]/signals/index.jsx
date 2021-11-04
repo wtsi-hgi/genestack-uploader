@@ -48,7 +48,11 @@ const NewSignal = () => {
   const loadTemplate = () => {
     apiRequest(`templates/${selectedTemplate}`).then((t) => {
       var fields = t.data.template
-        .filter((e) => !e.isReadOnly && e.dataType == JSON.parse(selectedTemplateSubtype).type)
+        .filter(
+          (e) =>
+            !e.isReadOnly &&
+            e.dataType == JSON.parse(selectedTemplateSubtype).type
+        )
         .map((e) => ({ name: e.name, required: e.isRequired }));
       setNewSignal({
         type: JSON.parse(selectedTemplateSubtype).name.toLowerCase(),

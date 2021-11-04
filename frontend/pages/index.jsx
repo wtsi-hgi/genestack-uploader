@@ -114,7 +114,8 @@ export default function Home() {
       <footer className={styles.footer}>
         <small>
           <code>
-            Software Version: {softwareVersion} | Package Version: {packageVersion} | Server: {genestackServer}
+            Software Version: {softwareVersion} | Package Version:{" "}
+            {packageVersion} | Server: {genestackServer}
           </code>
         </small>
       </footer>
