@@ -99,10 +99,37 @@ def all_studies() -> Response:
         if body is None:
             return INVALID_BODY
         try:
-            sample_file = body["Sample File"]
+            sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
+
+            # Getting Data from S3
+            s3_bucket.download_file(body["Sample File"], sample_file)
+
             del body["Sample File"]
+
             if "Study Title" not in body:
                 body["Study Title"] = body["Study Source"]
+
+            # Reanming Sample File Columns
+            if len(body["renamedColumns"]) != 0:
+                tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
+                with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
+                    tmp_rename.write("old|new|fillvalue\n")
+                    for col_rename in body["renamedColumns"]:
+                        tmp_rename.write(
+                            "|".join([
+                                col_rename["old"],
+                                col_rename["new"],
+                                col_rename["colValue"]
+                                if col_rename["colValue"] != ""
+                                else "[fillvalue]"
+                            ]) + "\n")
+
+                if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
+                    tmp_rename_fp,
+                    sample_file
+                ):
+                    sample_file = uploadtogenestack.GenestackUploadUtils.renamesamplefilecolumns(
+                        sample_file, tmp_rename_fp)
 
             del body["renamedColumns"]
 
@@ -112,12 +139,8 @@ def all_studies() -> Response:
                 tmp_tsv.write("\t".join(body.keys()) + "\n")
                 tmp_tsv.write("\t".join(body.values()) + "\n")
 
-            # Getting Data from S3
-            s3_bucket.download_file(
-                sample_file, f"/tmp/{sample_file.replace('/', '_')}")
-
             study = uploadtogenestack.GenestackStudy(
-                samplefile=f"/tmp/{sample_file.replace('/', '_')}",
+                samplefile=sample_file,
                 genestackserver=config.GENESTACK_SERVER,
                 genestacktoken=token,
                 studymetadata=tmp_fp
