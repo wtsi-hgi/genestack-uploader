@@ -2,6 +2,8 @@
     API Endpoints
 """
 
+from collections import OrderedDict
+import csv
 import importlib.metadata
 from json.decoder import JSONDecodeError
 import time
@@ -99,6 +101,9 @@ def all_studies() -> Response:
         if body is None:
             return INVALID_BODY
         try:
+            if "Study Title" not in body or body["Study Title"] == "":
+                body["Study Title"] = body["Study Source"]
+
             sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
 
             # Getting Data from S3
@@ -106,11 +111,20 @@ def all_studies() -> Response:
 
             del body["Sample File"]
 
-            if "Study Title" not in body:
-                body["Study Title"] = body["Study Source"]
-
             # Reanming Sample File Columns
             if len(body["renamedColumns"]) != 0:
+                with open(sample_file, encoding="UTF-8") as samples:
+                    reader = csv.reader(samples, delimiter="\t")
+                    headers = next(reader)
+
+                for header in headers:
+                    if header not in [x["old"] for x in body["renamedColumns"]]:
+                        body["renamedColumns"].append({
+                            "old": header,
+                            "new": header,
+                            "colValue": ""
+                        })
+
                 tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
                 with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
                     tmp_rename.write("old|new|fillvalue\n")
@@ -136,6 +150,7 @@ def all_studies() -> Response:
             # Creating Metadata TSV
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
             with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                body = OrderedDict(body)
                 tmp_tsv.write("\t".join(body.keys()) + "\n")
                 tmp_tsv.write("\t".join(body.values()) + "\n")
 
