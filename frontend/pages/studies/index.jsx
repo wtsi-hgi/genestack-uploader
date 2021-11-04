@@ -158,6 +158,11 @@ const NewStudy = () => {
           <div>
             <label>Rename Columns</label>
             <br />
+            {newStudy.renamedColumns.length != 0 && (
+              <small className="text-secondary text-sm">
+                Leave Column Value blank for default.
+              </small>
+            )}
             {newStudy.renamedColumns.map((val, idx) => (
               <div
                 className="form-control"
@@ -183,6 +188,16 @@ const NewStudy = () => {
                     setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
                 />
+                <input
+                  type="text"
+                  defaultValue={val.colValue}
+                  placeholder="Column Value"
+                  onBlur={(e) => {
+                    var tmp_renames = newStudy.renamedColumns;
+                    tmp_renames[idx].colValue = e.target.value;
+                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
+                  }}
+                />
                 <button
                   type="button"
                   className="btn btn-sm btn-danger"
@@ -204,7 +219,7 @@ const NewStudy = () => {
                   ...newStudy,
                   renamedColumns: [
                     ...newStudy.renamedColumns,
-                    { old: "", new: "" },
+                    { old: "", new: "", colValue: "" },
                   ],
                 });
               }}
