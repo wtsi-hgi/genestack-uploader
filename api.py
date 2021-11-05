@@ -15,10 +15,16 @@ import requests
 import uploadtogenestack
 
 import config
+import s3
 
 gs_config = uploadtogenestack.GenestackStudy.get_gs_config(
     config.GENESTACK_SERVER)
-s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
+
+try:
+    s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
+except botocore.exceptions.ClientError as start_s3_err:
+    raise PermissionError(
+        "you must set a public S3 policy to start the app") from start_s3_err
 
 api_blueprint = flask.Blueprint("api", "api")
 
@@ -106,60 +112,61 @@ def all_studies() -> Response:
 
             sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
 
-            # Getting Data from S3
-            s3_bucket.download_file(body["Sample File"], sample_file)
+            with s3.S3PublicPolicy(s3_bucket):
+                # Getting Data from S3
+                s3_bucket.download_file(body["Sample File"], sample_file)
 
-            del body["Sample File"]
+                del body["Sample File"]
 
-            # Reanming Sample File Columns
-            if len(body["renamedColumns"]) != 0:
-                with open(sample_file, encoding="UTF-8") as samples:
-                    reader = csv.reader(samples, delimiter="\t")
-                    headers = next(reader)
+                # Reanming Sample File Columns
+                if len(body["renamedColumns"]) != 0:
+                    with open(sample_file, encoding="UTF-8") as samples:
+                        reader = csv.reader(samples, delimiter="\t")
+                        headers = next(reader)
 
-                for header in headers:
-                    if header not in [x["old"] for x in body["renamedColumns"]]:
-                        body["renamedColumns"].append({
-                            "old": header,
-                            "new": header,
-                            "colValue": ""
-                        })
+                    for header in headers:
+                        if header not in [x["old"] for x in body["renamedColumns"]]:
+                            body["renamedColumns"].append({
+                                "old": header,
+                                "new": header,
+                                "colValue": ""
+                            })
 
-                tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
-                with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
-                    tmp_rename.write("old|new|fillvalue\n")
-                    for col_rename in body["renamedColumns"]:
-                        tmp_rename.write(
-                            "|".join([
-                                col_rename["old"],
-                                col_rename["new"],
-                                col_rename["colValue"]
-                                if col_rename["colValue"] != ""
-                                else "[fillvalue]"
-                            ]) + "\n")
+                    tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
+                    with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
+                        tmp_rename.write("old|new|fillvalue\n")
+                        for col_rename in body["renamedColumns"]:
+                            tmp_rename.write(
+                                "|".join([
+                                    col_rename["old"],
+                                    col_rename["new"],
+                                    col_rename["colValue"]
+                                    if col_rename["colValue"] != ""
+                                    else "[fillvalue]"
+                                ]) + "\n")
 
-                if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
-                    tmp_rename_fp,
-                    sample_file
-                ):
-                    sample_file = uploadtogenestack.GenestackUploadUtils.renamesamplefilecolumns(
-                        sample_file, tmp_rename_fp)
+                    if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
+                        tmp_rename_fp,
+                        sample_file
+                    ):
+                        sample_file = uploadtogenestack.GenestackUploadUtils. \
+                            renamesamplefilecolumns(sample_file, tmp_rename_fp)
 
-            del body["renamedColumns"]
+                del body["renamedColumns"]
 
-            # Creating Metadata TSV
-            tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
-            with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
-                body = OrderedDict(body)
-                tmp_tsv.write("\t".join(body.keys()) + "\n")
-                tmp_tsv.write("\t".join(body.values()) + "\n")
+                # Creating Metadata TSV
+                tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+                with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                    body = OrderedDict(body)
+                    tmp_tsv.write("\t".join(body.keys()) + "\n")
+                    tmp_tsv.write("\t".join(body.values()) + "\n")
 
-            study = uploadtogenestack.GenestackStudy(
-                samplefile=sample_file,
-                genestackserver=config.GENESTACK_SERVER,
-                genestacktoken=token,
-                studymetadata=tmp_fp
-            )
+                study = uploadtogenestack.GenestackStudy(
+                    samplefile=sample_file,
+                    genestackserver=config.GENESTACK_SERVER,
+                    genestacktoken=token,
+                    studymetadata=tmp_fp
+                )
 
             return _create_response({"accession": study.study_accession}, 201)
 
@@ -249,16 +256,20 @@ def all_signals(study_id: str) -> Response:
                 tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
             body["metadata"] = tmp_fp
 
-            # Downloading S3 File
-            s3_bucket.download_file(
-                body["data"], f"/tmp/{body['data'].replace('/', '_')}")
-            body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
-            uploadtogenestack.GenestackStudy(
-                study_genestackaccession=study_id,
-                genestackserver=config.GENESTACK_SERVER,
-                genestacktoken=token,
-                signal_dict=body
-            )
+            with s3.S3PublicPolicy(s3_bucket):
+                # Downloading S3 File
+                s3_bucket.download_file(
+                    body["data"], f"/tmp/{body['data'].replace('/', '_')}")
+
+                body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
+
+                uploadtogenestack.GenestackStudy(
+                    study_genestackaccession=study_id,
+                    genestackserver=config.GENESTACK_SERVER,
+                    genestacktoken=token,
+                    signal_dict=body
+                )
+
             return CREATED
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
