@@ -244,8 +244,10 @@ def all_signals(study_id: str) -> Response:
         return MISSING_TOKEN
 
     if flask.request.method == "POST":
+        body: T.Dict[str, T.Any] = flask.request.json
+        if body is None:
+            return INVALID_BODY
         try:
-            body: T.Dict[str, T.Any] = flask.request.json
             body["linkingattribute"] = [
                 {"column": x} for x in body["linkingattribute"] if x != "Sample Source ID"]
 
@@ -280,6 +282,9 @@ def all_signals(study_id: str) -> Response:
             uploadtogenestack.genestackassist.LinkingNotPossibleError
         ) as err:
             return _bad_request_error(err)
+
+        except uploadtogenestack.genestackETL.StudyAccessionError as err:
+            return _not_found(err)
 
         except botocore.exceptions.ClientError:
             return _create_response({"error": "S3 bucket permission denied"}, 403)
