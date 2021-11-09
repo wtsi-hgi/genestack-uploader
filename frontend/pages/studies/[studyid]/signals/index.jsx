@@ -66,9 +66,13 @@ const NewSignal = () => {
       });
 
       apiRequest("templateTypes").then((t) => {
-        setTemplateSubtypes(
-          t.data.map((e) => ({ name: e.displayName, type: e.dataType }))
-        );
+        let templateSubtypes = t.data
+          .filter((e) =>
+            ["expression", "variant"].includes(e.displayName.toLowerCase())
+          )
+          .map((e) => ({ name: e.displayName, type: e.dataType }));
+        setTemplateSubtypes(templateSubtypes);
+        setSelectedTemplateSubtype(JSON.stringify(templateSubtypes[0]));
       });
     }
   }, [router.query]);
@@ -88,6 +92,7 @@ const NewSignal = () => {
         tag: "",
         linkingattribute: ["Sample Source ID"],
         metadata: fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {}),
+        generateMinimalVCF: false,
       });
       setTemplateFields(fields);
     });
@@ -309,13 +314,34 @@ const NewSignal = () => {
           </div>
         ))}
         {templateFields.length != 0 && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={submitSignal}
-          >
-            Submit
-          </button>
+          <div>
+            {JSON.parse(selectedTemplateSubtype).name.toLowerCase() ==
+              "variant" && (
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  onClick={(e) =>
+                    setNewSignal({
+                      ...newSignal,
+                      generateMinimalVCF: e.target.checked,
+                    })
+                  }
+                ></input>
+                <label className="form-check-lable">
+                  Generate Minimal VCF File
+                </label>
+              </div>
+            )}
+            <br />
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={submitSignal}
+            >
+              Submit
+            </button>
+          </div>
         )}
       </form>
       <br />
