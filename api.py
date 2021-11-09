@@ -71,6 +71,19 @@ def _bad_request_error(err: Exception):
     }, 400)
 
 
+class SignalNotFoundError(Exception):
+    """For when signal not found"""
+    ...
+
+
+class MultipleSignalsFoundError(Exception):
+    """
+    When multiple signals are found
+    given the criteria
+    """
+    ...
+
+
 @api_blueprint.app_errorhandler(404)
 def _not_found(err: T.Any) -> Response:
     """
@@ -326,14 +339,21 @@ def single_signal(study_id: str, signal_id: str) -> Response:
         try:
             gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
+
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)
                        if signal["itemId"] == signal_id]
+
             if len(signals) == 1:
                 return _create_response({"studyAccession": study_id, "signal": signals[0]})
+
             if len(signals) == 0:
-                return _not_found(f"signal {signal_id} not found on study {study_id}")
-            return _internal_server_error(("multiple signals found",))
+                return _not_found(
+                    SignalNotFoundError(
+                        f"signal {signal_id} not found on study {study_id}")
+                )
+
+            return _internal_server_error(MultipleSignalsFoundError("multiple signals found"))
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
