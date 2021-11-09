@@ -47,6 +47,8 @@ def create_response(data: T.Any, code: int = 200) -> Response:
 INVALID_BODY = create_response({"error": "no valid json body"}, 400)
 MISSING_TOKEN = create_response({"error": "missing token"}, 401)
 FORBIDDEN = create_response({"error": "forbidden"}, 403)
+S3_PERMISSION_DENIED = create_response(
+    {"error": "S3 bucket permission denied"}, 403)
 # NOT_IMPLEMENTED = create_response({"error": "not implemented"}, 501)
 # METHOD_NOT_ALLOWED = create_response({"error": "method not allowed"}, 405)
 
@@ -77,11 +79,15 @@ def bad_request_error(err: Exception):
     }, 400)
 
 
-def not_found(err: T.Any) -> Response:
+def not_found(err: Exception) -> Response:
     """
         404 Not Found Response
     """
-    return create_response({"error": f"not found: {err}"}, 404)
+    return create_response({
+        "error": "not found",
+        "name": err.__class__.__name__,
+        "detail": err.args
+    }, 404)
 
 
 class EndpointNotFoundError(Exception):

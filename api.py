@@ -217,7 +217,7 @@ def all_studies() -> Response:
             return FORBIDDEN
 
         except botocore.exceptions.ClientError:
-            return create_response({"error": "S3 bucket permission denied"}, 403)
+            return S3_PERMISSION_DENIED
 
         except Exception as err:
             return internal_server_error(err)
@@ -344,7 +344,7 @@ def all_signals(study_id: str) -> Response:
             return not_found(err)
 
         except botocore.exceptions.ClientError:
-            return create_response({"error": "S3 bucket permission denied"}, 403)
+            return S3_PERMISSION_DENIED
 
         except Exception as err:
             return internal_server_error(err)

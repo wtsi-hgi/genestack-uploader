@@ -614,7 +614,14 @@ components:
           properties:
             error:
               type: string
-              example: "not found: Study with accession GSF123456 not found"
+              default: "not found"
+            name:
+              type: string
+              example: StudyNotFoundError
+            detail:
+                type: array
+                items:
+                    type: object
 
     InternalServerError:
       type: object
