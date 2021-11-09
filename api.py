@@ -284,16 +284,31 @@ def all_signals(study_id: str) -> Response:
     # POST Handler #
     # ************ #
     if flask.request.method == "POST":
+
+        # As with the POST to create a new study, all the information we want
+        # is in the JSON body
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
             return INVALID_BODY
+
+        # The user can specify what attributes in the signal file they want to use to link
+        # it to the samples. By default we use Sample Source ID, so we don't care if that's already
+        # in the list. It will be if coming from our frontend, cause we give it to the user to
+        # clearly show what's going on
+
+        # We basically need to replace the list of strings we get, with a list of objects,
+        # {"column": value} for value in list
         try:
             body["linkingattribute"] = [
                 {"column": x} for x in body["linkingattribute"] if x != "Sample Source ID"]
 
             # Creating Metadata TSV
+
+            # As with creating the study, genestack needs the metadata to be in a TSV file
+            # with the first line being the keys, and the second line being the values
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
             with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                body["metadata"] = OrderedDict(body["metadata"])
                 tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
                 tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
             body["metadata"] = tmp_fp
@@ -305,6 +320,8 @@ def all_signals(study_id: str) -> Response:
 
                 body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
 
+                # By "creating" a GenestackStudy with a study accession, we'll actually
+                # be able to modify the study - in our case we want to add a signal_dict
                 uploadtogenestack.GenestackStudy(
                     study_genestackaccession=study_id,
                     genestackserver=config.GENESTACK_SERVER,
@@ -431,8 +448,26 @@ def get_template(template_id: str):
         template = gsu.ApplicationsODM(
             gsu, None).get_template_detail(template_id)
 
-        if template.status_code == 404:
-            return not_found(TemplateNotFoundError(template.text))
+        if "Failed to found template" in template.text:
+            # OK, here we go
+            # Time for a bit of complaining about the Genestack API
+
+            # What I wanted to do here was:
+            # if template.status_code == 404:
+            # you know, like I should be able to do, as 404 is the status code
+            # for when something isn't found.
+
+            # But Genestack doesn't return a 404 when it can't find the template,
+            # instead it returns "201 Created". **mindblow**
+            # It's not like its even creating the template when it doesn't find it
+
+            # So, here we are. I'm searching for "Failed to found template" in
+            # the response text. Which doesn't even really make sense.
+
+            # ¯\_(ツ)_/¯
+            # Complaining Over.
+
+            return not_found(TemplateNotFoundError(template.json()["error"]))
 
         return create_response({
             "accession": template_id,
