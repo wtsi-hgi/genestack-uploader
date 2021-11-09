@@ -34,14 +34,20 @@ const NewSignal = () => {
   const router = useRouter();
 
   const [studyId, setStudyId] = useState("");
+
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
+
   const [templateSubtypes, setTemplateSubtypes] = useState([]);
   const [selectedTemplateSubtype, setSelectedTemplateSubtype] = useState("");
+
   const [templateFields, setTemplateFields] = useState([]);
+
   const [newSignal, setNewSignal] = useState(Object);
+
   const [successfulRequest, setSuccessfulRequest] = useState("");
   const [apiError, setApiError] = useState("");
+
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {

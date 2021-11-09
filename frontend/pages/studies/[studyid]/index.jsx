@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { apiRequest, keyCheck, postApiReqiest } from "../../../utils/api";
+import { apiRequest, keyCheck } from "../../../utils/api";
 import styles from "../../../styles/Home.module.css";
 import { HelpModal } from "../../../utils/HelpModal";
 import { ArrowLeftCircle } from "react-bootstrap-icons";

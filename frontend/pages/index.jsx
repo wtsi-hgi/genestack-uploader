@@ -26,6 +26,15 @@ import styles from "../styles/Home.module.css";
 import { apiRequest } from "../utils/api";
 
 const studyNames = async (ignore_unauth) => {
+  /**
+   * We need to pull the names and accessions of the studies from the API
+   * However, we also need to use the oppurtunity to check if the authentication
+   * works. So, only once, we'll ignore it if its unauthorised (its not like the
+   * API will return anything), and then prompt the user to enter a token, instead
+   * of going in alarm bells ringing like HEY LOOK - YOU'RE NOT ALLOWED TO ACCESS
+   * THIS DATA WHAT ARE YOU DOING, when actually its more like "Hey, I just haven't
+   * typed in the token yet"
+   */
   var studies = await apiRequest("studies", ignore_unauth);
   return studies.data.map((e) => ({
     title: e["Study Source"],
@@ -34,6 +43,10 @@ const studyNames = async (ignore_unauth) => {
 };
 
 const saveAPIToken = (token) => {
+  /**
+   * When we save the API token into localStorage, we also need to
+   * save the time it gets saved, so we can have an expiry time
+   */
   localStorage.setItem("Genestack-API-Token", token);
   localStorage.setItem("Genestack-API-Set-Time", Date.now());
 };
@@ -41,11 +54,36 @@ const saveAPIToken = (token) => {
 export default function Home() {
   const [studies, setStudies] = useState([]);
   const [selectedStudy, setSelectedStudy] = useState("");
-  const [unauthorisedWarning, setUnauthorisedWarning] = useState("");
 
   const [softwareVersion, setSoftwareVersion] = useState("");
   const [genestackServer, setGenestackServer] = useState("");
   const [packageVersion, setPackageVersion] = useState("");
+
+  /**
+   * Let's go over how the unauthorisedWarning system works.
+   *
+   * By default its "", which won't display any warning.
+   * When we load the page, it'll load whatever is in the localStorage
+   *
+   * When we press the authenticate button, and call the authenticate function,
+   * we update the localStorage to "" (as in - there's no problem).
+   *
+   * If we're not ignoring unauthorised requests (like normal), we'll also hide the warning,
+   * by setting unauthorisedWarning to "".
+   *
+   * Then, we'll look up the study names. When we do this, we call the apiRequest function
+   * (in api.js)
+   *
+   * If the API call says we're not authorised, it'll set the localStorage value and redirect
+   * us to the homepage, which'll therefore display the unauthorised message.
+   *
+   * The other part of this whole process is the keyCheck function, which runs on any (except this one)
+   * page load. This **also** considers the expiry time, which is one hour after the key was set.
+   *
+   * If it has expired, it wipes the key, sets localStorage appropriately and redirects us to this page,
+   * to display the warning about the token expiring.
+   */
+  const [unauthorisedWarning, setUnauthorisedWarning] = useState("");
 
   const authenticate = (ignore_unauth) => {
     localStorage.setItem("unauthorised", "");

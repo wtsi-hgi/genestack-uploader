@@ -33,11 +33,14 @@ const NewStudy = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [templateFields, setTemplateFields] = useState([]);
+
   const [newStudy, setNewStudy] = useState(Object);
+
   const [successfulRequest, setSuccessfulRequest] = useState("");
   const [apiError, setApiError] = useState("");
-  const [showHelpModal, setShowHelpModal] = useState(false);
   const [createdStudyAccession, setCreatedStudyAccesion] = useState("");
+
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     keyCheck();
@@ -52,6 +55,20 @@ const NewStudy = () => {
   }, []);
 
   const loadTemplate = () => {
+    /**
+     * When the user selects a template from the list,
+     * We need to request that tempalte from the API, filter
+     * it to only the fields related to a study, and the ones that
+     * aren't read only. Then, we'll create {name, required} objects
+     * with that, and also add the "Sample Field" entry to the list.
+     *
+     * Sample Field isn't part of the template, its just required
+     * information regardless of the template.
+     *
+     * Then, we'll set the "newStudy" to all of these field names
+     * mapped to a blank string. In addition to that, there's an
+     * empty list for the columns we're going to rename.
+     */
     apiRequest(`templates/${selectedTemplate}`).then((t) => {
       var fields = t.data.template
         .filter((e) => !e.isReadOnly && e.dataType == "study")
@@ -67,6 +84,7 @@ const NewStudy = () => {
   };
 
   const submitStudy = async () => {
+    // Check for required fields
     let requiredFields = templateFields.filter((e) => e.required);
     let fieldsMissing = false;
     requiredFields.forEach((e) => {
@@ -80,6 +98,9 @@ const NewStudy = () => {
       return;
     }
 
+    // POST the request, and show LOADING
+    // if it succeeds, show success and the new study accession
+    // if it fails, show the error
     setSuccessfulRequest("LOADING");
     setApiError("");
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
