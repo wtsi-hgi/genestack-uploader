@@ -88,7 +88,8 @@ class EndpointNotFoundError(Exception):
     """
         For default 404 in the API
     """
-    super().__init__("Not Found")
+    def __init__(self) -> None:
+        super().__init__("Not Found")
 
 
 class SignalNotFoundError(Exception):

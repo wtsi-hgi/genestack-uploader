@@ -36,9 +36,16 @@ from api_utils import *  # pylint: disable=wildcard-import
 import config
 import s3
 
+# first up, we need to grab the genestack configuration
+# this is typically in ~/.genestack.cfg
+# we define in the config which genestack server we're using
 gs_config = uploadtogenestack.GenestackStudy.get_gs_config(
     config.GENESTACK_SERVER)
 
+# as we need to pull files from the S3 bucket, we need a connection to the bucket
+# to start of with. this can throw an exception right at the start of the program
+# if we can't access the bucket, so a public policy will need setting so we
+# can start the app
 try:
     s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
 except botocore.exceptions.ClientError as start_s3_err:
@@ -67,6 +74,9 @@ def api_version() -> Response:
 
 @api_blueprint.route("/", methods=["GET"])
 def _():
+    """Here, we need both `.../api` and `.../api/` to
+    give us the status information
+    """
     return api_version()
 
 
@@ -82,22 +92,64 @@ def all_studies() -> Response:
         return MISSING_TOKEN
 
     if flask.request.method == "POST":
+
+        # Here we going to be creating a new study
+        # The information we need will be stored in the response body
+        # This should be JSON, and should actually exist
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
             return INVALID_BODY
+
         try:
+            # If we aren't given a specific Study Title, we're going to
+            # use the Study Source as a placeholder
             if "Study Title" not in body or body["Study Title"] == "":
                 body["Study Title"] = body["Study Source"]
 
+            # We need to download the sample file from the S3 bucket and
+            # store it locally so it can get uploaded.
+            # Once it has been uploaded, we don't care about it anymore,
+            # so we'll just store it in /tmp
             sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
 
             with s3.S3PublicPolicy(s3_bucket):
+                
                 # Getting Data from S3
                 s3_bucket.download_file(body["Sample File"], sample_file)
 
+                # Although Sample File is passed to us in our API,
+                # it would be invalid in what we pass to genestack, so we
+                # need rid of it now we've downloaded the file from S3
                 del body["Sample File"]
 
                 # Reanming Sample File Columns
+
+                # The user has the oppurtunity to rename columns in the sample file,
+                # or create new columns in the sample file before it gets uploaded.
+                # We get passed {old: ..., new: ..., colValue: ...} objects giving us
+                # the column name to rename, the new column name and the value that should
+                # be in the column. Leaving colValue blank shows we want to use the values
+                # that are already in that column (which can be different in every row).
+                # Filling in colValue means we want the same value in each cell, which
+                # can be used when making new columns. This involves leaving `old` as
+                # an empty string
+
+                # The other important thing is that is a column isn't included, it'll be
+                # deleted. We don't give the user the option to delete columns, so we need
+                # to ensure that ALL current columns are also included. For this, we read
+                # the headers of the sample file, and add those records in, keeping old and
+                # new the same, and leaving colValue blank, so it uses the already existing
+                # values.
+
+                # Then we open a file to write this all to, how the uploadtogenestack package
+                # expects it to be. This is a `|` separated file, with a header row:
+                # old|new|fillvalue
+                # where fillvalue is what we've called colValue up to now
+                # Then we can pass the samples file, this new temp file to the package, and
+                # get back the path of a new samples file, which we'll use later on.
+
+                # all this is under the assumption that we're going to rename anything,
+                # hence `if len(body["renamedColumns"]) != 0:`
                 if len(body["renamedColumns"]) != 0:
                     with open(sample_file, encoding="UTF-8") as samples:
                         reader = csv.reader(samples, delimiter="\t")
@@ -134,6 +186,12 @@ def all_studies() -> Response:
                 del body["renamedColumns"]
 
                 # Creating Metadata TSV
+
+                # Genestack needs us to give it the metadata in a TSV file, which has
+                # two rows, the top row being the metadata keys, and the second row being
+                # the metadata values.
+
+                # We can then create a new `GenestackStudy` to upload everything to Genestack
                 tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
                 with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
                     body = OrderedDict(body)
