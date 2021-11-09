@@ -91,6 +91,9 @@ def all_studies() -> Response:
     if not token:
         return MISSING_TOKEN
 
+    # ************ #
+    # POST Handler #
+    # ************ #
     if flask.request.method == "POST":
 
         # Here we going to be creating a new study
@@ -113,7 +116,7 @@ def all_studies() -> Response:
             sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
 
             with s3.S3PublicPolicy(s3_bucket):
-                
+
                 # Getting Data from S3
                 s3_bucket.download_file(body["Sample File"], sample_file)
 
@@ -219,22 +222,22 @@ def all_studies() -> Response:
         except Exception as err:
             return internal_server_error(err)
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
-            # Note: This doesn't take into account pagination
-            # will return max. 2000 results
-            studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
-            return create_response(studies.json()["data"])
+    # *********** #
+    # GET Handler #
+    # *********** #
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
+        # Note: This doesn't take into account pagination
+        # will return max. 2000 results
+        studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
+        return create_response(studies.json()["data"])
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except Exception as err:
-            return internal_server_error(err)
-
-    return METHOD_NOT_ALLOWED
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/studies/<study_id>", methods=["GET"])
@@ -247,26 +250,23 @@ def single_study(study_id: str) -> Response:
     if not token:
         return MISSING_TOKEN
 
-    if flask.request.method == "GET":
-        study: T.Optional[requests.Response] = None
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
-            study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
-            return create_response(study.json())
+    study: T.Optional[requests.Response] = None
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
+        study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
+        return create_response(study.json())
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except JSONDecodeError:
-            if study and "Object cannot be found" in study.text:
-                return not_found(StudyNotFoundError(study.text))
-            raise
+    except JSONDecodeError:
+        if study and "Object cannot be found" in study.text:
+            return not_found(StudyNotFoundError(study.text))
+        raise
 
-        except Exception as err:
-            return internal_server_error(err)
-
-    return METHOD_NOT_ALLOWED
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/studies/<study_id>/signals", methods=["GET", "POST"])
@@ -280,6 +280,9 @@ def all_signals(study_id: str) -> Response:
     if not token:
         return MISSING_TOKEN
 
+    # ************ #
+    # POST Handler #
+    # ************ #
     if flask.request.method == "POST":
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
@@ -329,24 +332,24 @@ def all_signals(study_id: str) -> Response:
         except Exception as err:
             return internal_server_error(err)
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
-            signals = [signal for type in ["variant", "expression"]
-                       for signal in gsu.get_signals_by_group(study_id, type)]
-            return create_response({"studyAccession": study_id, "signals": signals})
+    # *********** #
+    # GET Handler #
+    # *********** #
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
+        signals = [signal for type in ["variant", "expression"]
+                   for signal in gsu.get_signals_by_group(study_id, type)]
+        return create_response({"studyAccession": study_id, "signals": signals})
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except uploadtogenestack.genestackETL.StudyAccessionError as err:
-            return not_found(err)
+    except uploadtogenestack.genestackETL.StudyAccessionError as err:
+        return not_found(err)
 
-        except Exception as err:
-            return internal_server_error(err)
-
-    return METHOD_NOT_ALLOWED
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/studies/<study_id>/signals/<signal_id>", methods=["GET"])
@@ -359,36 +362,33 @@ def single_signal(study_id: str, signal_id: str) -> Response:
     if not token:
         return MISSING_TOKEN
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
 
-            signals = [signal for type in ["variant", "expression"]
-                       for signal in gsu.get_signals_by_group(study_id, type)
-                       if signal["itemId"] == signal_id]
+        signals = [signal for type in ["variant", "expression"]
+                   for signal in gsu.get_signals_by_group(study_id, type)
+                   if signal["itemId"] == signal_id]
 
-            if len(signals) == 1:
-                return create_response({"studyAccession": study_id, "signal": signals[0]})
+        if len(signals) == 1:
+            return create_response({"studyAccession": study_id, "signal": signals[0]})
 
-            if len(signals) == 0:
-                return not_found(
-                    SignalNotFoundError(
-                        f"signal {signal_id} not found on study {study_id}")
-                )
+        if len(signals) == 0:
+            return not_found(
+                SignalNotFoundError(
+                    f"signal {signal_id} not found on study {study_id}")
+            )
 
-            return internal_server_error(MultipleSignalsFoundError("multiple signals found"))
+        return internal_server_error(MultipleSignalsFoundError("multiple signals found"))
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except uploadtogenestack.genestackETL.StudyAccessionError as err:
-            return not_found(err)
+    except uploadtogenestack.genestackETL.StudyAccessionError as err:
+        return not_found(err)
 
-        except Exception as err:
-            return internal_server_error(err)
-
-    return METHOD_NOT_ALLOWED
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/templates", methods=["GET"])
@@ -401,18 +401,17 @@ def get_all_templates():
     if not token:
         return MISSING_TOKEN
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
-            template = gsu.ApplicationsODM(gsu, None).get_all_templates()
-            return create_response(template.json()["result"])
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
+        template = gsu.ApplicationsODM(gsu, None).get_all_templates()
+        return create_response(template.json()["result"])
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except Exception as err:
-            return internal_server_error(err)
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/templates/<template_id>", methods=["GET"])
@@ -426,26 +425,25 @@ def get_template(template_id: str):
     if not token:
         return MISSING_TOKEN
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT)
-            template = gsu.ApplicationsODM(
-                gsu, None).get_template_detail(template_id)
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT)
+        template = gsu.ApplicationsODM(
+            gsu, None).get_template_detail(template_id)
 
-            if template.status_code == 404:
-                return not_found(TemplateNotFoundError(template.text))
+        if template.status_code == 404:
+            return not_found(TemplateNotFoundError(template.text))
 
-            return create_response({
-                "accession": template_id,
-                "template": template.json()["result"]
-            })
+        return create_response({
+            "accession": template_id,
+            "template": template.json()["result"]
+        })
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except Exception as err:
-            return internal_server_error(err)
+    except Exception as err:
+        return internal_server_error(err)
 
 
 @api_blueprint.route("/templateTypes", methods=["GET"])
@@ -459,16 +457,15 @@ def get_template_types():
     if not token:
         return MISSING_TOKEN
 
-    if flask.request.method == "GET":
-        try:
-            gsu = uploadtogenestack.GenestackUtils(
-                token=token, server=config.SERVER_ENDPOINT
-            )
-            types = gsu.ApplicationsODM(gsu, None).get_template_types()
-            return create_response(types.json()["result"])
+    try:
+        gsu = uploadtogenestack.GenestackUtils(
+            token=token, server=config.SERVER_ENDPOINT
+        )
+        types = gsu.ApplicationsODM(gsu, None).get_template_types()
+        return create_response(types.json()["result"])
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
-            return FORBIDDEN
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        return FORBIDDEN
 
-        except Exception as err:
-            return internal_server_error(err)
+    except Exception as err:
+        return internal_server_error(err)

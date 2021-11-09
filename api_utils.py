@@ -48,7 +48,7 @@ INVALID_BODY = create_response({"error": "no valid json body"}, 400)
 MISSING_TOKEN = create_response({"error": "missing token"}, 401)
 FORBIDDEN = create_response({"error": "forbidden"}, 403)
 # NOT_IMPLEMENTED = create_response({"error": "not implemented"}, 501)
-METHOD_NOT_ALLOWED = create_response({"error": "method not allowed"}, 405)
+# METHOD_NOT_ALLOWED = create_response({"error": "method not allowed"}, 405)
 
 CREATED = create_response("Created", 201)
 
@@ -88,6 +88,7 @@ class EndpointNotFoundError(Exception):
     """
         For default 404 in the API
     """
+
     def __init__(self) -> None:
         super().__init__("Not Found")
 

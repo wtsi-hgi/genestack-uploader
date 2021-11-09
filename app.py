@@ -42,6 +42,8 @@ def _(_):
 # as next js produces files with [square brackets] indicating URL parameters
 # we need to use those files when given parameters, so we tell Flask to ignore
 # them and just serve the static files
+
+
 @app.route("/")
 def _index():
     return flask.send_from_directory(app.static_folder, "index.html")
@@ -69,9 +71,12 @@ def _signals_id(**_):
 
 # The API spec is given in the openapi.yaml file, which is in the root
 # of the project, and is served at /docs/openapi
+
+
 @app.route("/docs/openapi")
 def _openapi():
     return flask.send_from_directory("", "openapi.yaml")
+
 
 # as we want interactive swagger docs, we can get a blueprint for it
 # and register it to our app on /docs using the spec at /docs/openapi
@@ -84,6 +89,8 @@ app.register_blueprint(swaggerui_blueprint)
 
 # when running in pruduction, we use waitress
 # when in development, we just use Flask (if __name__ == "__main__")
+
+
 def production():
     """Run in production with waitress"""
     waitress.serve(app, host="0.0.0.0", port=5000)
