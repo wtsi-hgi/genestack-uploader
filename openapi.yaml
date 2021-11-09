@@ -5,6 +5,8 @@ info:
   version: ""
 servers:
   - url: https://apps.hgi.sanger.ac.uk/genestack-uploader/api
+  - url: "http://localhost:5000/api"
+  - url: "http://172.27.17.238/genestack-uploader/api"
 paths:
   /:
     get:
@@ -41,7 +43,7 @@ paths:
         - studies
       summary: Add a new study to Genestack
       requestBody:
-        description: TODO
+        description: The body contains all the data we need to create the study, including the samples file, any columns getting renamed and the rest of the metadata.
         content:
           application/json:
             schema:
@@ -137,7 +139,7 @@ paths:
           schema:
             type: string
       requestBody:
-        description: TODO
+        description: The body contains all the data we need to create the signal, including the data file, signal type, tag, linking attributes and metadata.
         content:
           application/json:
             schema:

@@ -3,6 +3,7 @@
 """
 
 import flask
+from flask_swagger_ui import get_swaggerui_blueprint
 import waitress
 
 from api import api_blueprint
@@ -40,6 +41,19 @@ def _signal_index(_):
 def _signals_id(**_):
     return flask.send_from_directory(
         app.static_folder + "/studies/[studyid]/signals", "[signalid].html")
+
+
+@app.route("/docs/openapi")
+def _openapi():
+    return flask.send_from_directory("", "openapi.yaml")
+
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    "/docs",
+    "/docs/openapi",
+)
+
+app.register_blueprint(swaggerui_blueprint)
 
 
 def production():

@@ -14,6 +14,7 @@ import flask
 import requests
 import uploadtogenestack
 
+from api_utils import *  # pylint: disable=wildcard-import
 import config
 import s3
 
@@ -28,68 +29,10 @@ except botocore.exceptions.ClientError as start_s3_err:
 
 api_blueprint = flask.Blueprint("api", "api")
 
-Response = T.Tuple[T.Dict[str, T.Any], int]
-
-
-def _create_response(data: T.Any, code: int = 200) -> Response:
-    return {
-        "status": "OK" if code // 100 == 2 else "FAIL",
-        "data": data
-    }, code
-
-
-INVALID_BODY = _create_response({"error": "no valid json body"}, 400)
-MISSING_TOKEN = _create_response({"error": "missing token"}, 401)
-FORBIDDEN = _create_response({"error": "forbidden"}, 403)
-NOT_IMPLEMENTED = _create_response({"error": "not implemented"}, 501)
-METHOD_NOT_ALLOWED = _create_response({"error": "method not allowed"}, 405)
-
-CREATED = _create_response("Created", 201)
-
-
-def _internal_server_error(err: Exception):
-    """
-        500 Internal Server Error Response
-    """
-
-    return _create_response({
-        "error": "internal server error",
-        "name": err.__class__.__name__,
-        "detail": err.args
-    }, 500)
-
-
-def _bad_request_error(err: Exception):
-    """
-        400 Bad Request Error Response
-    """
-
-    return _create_response({
-        "error": "bad request",
-        "name": err.__class__.__name__,
-        "detail": err.args
-    }, 400)
-
-
-class SignalNotFoundError(Exception):
-    """For when signal not found"""
-    ...
-
-
-class MultipleSignalsFoundError(Exception):
-    """
-    When multiple signals are found
-    given the criteria
-    """
-    ...
-
 
 @api_blueprint.app_errorhandler(404)
-def _not_found(err: T.Any) -> Response:
-    """
-        404 Not Found Response
-    """
-    return _create_response({"error": f"not found: {err}"}, 404)
+def _():
+    return not_found(EndpointNotFoundError())
 
 
 @api_blueprint.route("", methods=["GET"])
@@ -97,11 +40,16 @@ def api_version() -> Response:
     """
         Default API endpoint, returns the software version and server
     """
-    return _create_response({
+    return create_response({
         "version": config.VERSION,
         "server": config.SERVER_ENDPOINT,
         "package": importlib.metadata.version("uploadtogenestack")
     })
+
+
+@api_blueprint.route("/", methods=["GET"])
+def _():
+    return api_version()
 
 
 @api_blueprint.route("/studies", methods=["GET", "POST"])
@@ -181,19 +129,19 @@ def all_studies() -> Response:
                     studymetadata=tmp_fp
                 )
 
-            return _create_response({"accession": study.study_accession}, 201)
+            return create_response({"accession": study.study_accession}, 201)
 
         except KeyError as err:
-            return _create_response({"error": f"missing key: {err}"}, 400)
+            return create_response({"error": f"missing key: {err}"}, 400)
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except botocore.exceptions.ClientError:
-            return _create_response({"error": "S3 bucket permission denied"}, 403)
+            return create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     if flask.request.method == "GET":
         try:
@@ -202,13 +150,13 @@ def all_studies() -> Response:
             # Note: This doesn't take into account pagination
             # will return max. 2000 results
             studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
-            return _create_response(studies.json()["data"])
+            return create_response(studies.json()["data"])
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -229,18 +177,18 @@ def single_study(study_id: str) -> Response:
             gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
-            return _create_response(study.json())
+            return create_response(study.json())
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except JSONDecodeError:
             if study and "Object cannot be found" in study.text:
-                return _not_found(study.text)
+                return not_found(StudyNotFoundError(study.text))
             raise
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -294,16 +242,16 @@ def all_signals(study_id: str) -> Response:
             FileNotFoundError,
             uploadtogenestack.genestackassist.LinkingNotPossibleError
         ) as err:
-            return _bad_request_error(err)
+            return bad_request_error(err)
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
-            return _not_found(err)
+            return not_found(err)
 
         except botocore.exceptions.ClientError:
-            return _create_response({"error": "S3 bucket permission denied"}, 403)
+            return create_response({"error": "S3 bucket permission denied"}, 403)
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     if flask.request.method == "GET":
         try:
@@ -311,16 +259,16 @@ def all_signals(study_id: str) -> Response:
                 token=token, server=config.SERVER_ENDPOINT)
             signals = [signal for type in ["variant", "expression"]
                        for signal in gsu.get_signals_by_group(study_id, type)]
-            return _create_response({"studyAccession": study_id, "signals": signals})
+            return create_response({"studyAccession": study_id, "signals": signals})
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
-            return _not_found(err)
+            return not_found(err)
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -345,24 +293,24 @@ def single_signal(study_id: str, signal_id: str) -> Response:
                        if signal["itemId"] == signal_id]
 
             if len(signals) == 1:
-                return _create_response({"studyAccession": study_id, "signal": signals[0]})
+                return create_response({"studyAccession": study_id, "signal": signals[0]})
 
             if len(signals) == 0:
-                return _not_found(
+                return not_found(
                     SignalNotFoundError(
                         f"signal {signal_id} not found on study {study_id}")
                 )
 
-            return _internal_server_error(MultipleSignalsFoundError("multiple signals found"))
+            return internal_server_error(MultipleSignalsFoundError("multiple signals found"))
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
-            return _not_found(err)
+            return not_found(err)
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
     return METHOD_NOT_ALLOWED
 
@@ -382,13 +330,13 @@ def get_all_templates():
             gsu = uploadtogenestack.GenestackUtils(
                 token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(gsu, None).get_all_templates()
-            return _create_response(template.json()["result"])
+            return create_response(template.json()["result"])
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
 
 @api_blueprint.route("/templates/<template_id>", methods=["GET"])
@@ -408,7 +356,11 @@ def get_template(template_id: str):
                 token=token, server=config.SERVER_ENDPOINT)
             template = gsu.ApplicationsODM(
                 gsu, None).get_template_detail(template_id)
-            return _create_response({
+
+            if template.status_code == 404:
+                return not_found(TemplateNotFoundError(template.text))
+
+            return create_response({
                 "accession": template_id,
                 "template": template.json()["result"]
             })
@@ -417,7 +369,7 @@ def get_template(template_id: str):
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
 
 
 @api_blueprint.route("/templateTypes", methods=["GET"])
@@ -437,10 +389,10 @@ def get_template_types():
                 token=token, server=config.SERVER_ENDPOINT
             )
             types = gsu.ApplicationsODM(gsu, None).get_template_types()
-            return _create_response(types.json()["result"])
+            return create_response(types.json()["result"])
 
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
         except Exception as err:
-            return _internal_server_error(err)
+            return internal_server_error(err)
