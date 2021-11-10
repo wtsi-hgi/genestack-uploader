@@ -438,6 +438,9 @@ components:
           type: object
           additionalProperties:
             type: string
+        generateMinimalVCF:
+          type: boolean
+          description: Whether to generate a minimal VCF file. This only applies if `type` is "Variant".
 
     Created:
       type: object

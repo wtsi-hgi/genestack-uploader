@@ -320,6 +320,12 @@ def all_signals(study_id: str) -> Response:
 
                 body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
 
+                if body["type"].lower() == "variant" and body.get("generateMinimalVCF"):
+                    new_body = f"/tmp/minimalvcf-{int(time.time()*1000)}.tsv"
+                    uploadtogenestack.GenestackUploadUtils.writeonelinevcf(
+                        body["data"], new_body)
+                    body["data"] = new_body
+
                 # By "creating" a GenestackStudy with a study accession, we'll actually
                 # be able to modify the study - in our case we want to add a signal_dict
                 uploadtogenestack.GenestackStudy(
