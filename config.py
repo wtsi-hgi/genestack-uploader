@@ -24,7 +24,7 @@ import os
 
 # Configuration Settings
 
-VERSION = "0.10"
+VERSION = "0.11"
 
 GENESTACK_SERVER = os.environ["GSSERVER"]
 assert GENESTACK_SERVER in ["default", "qc"]
