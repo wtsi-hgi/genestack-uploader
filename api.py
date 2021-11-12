@@ -48,7 +48,10 @@ gs_config = uploadtogenestack.GenestackStudy.get_gs_config(
 # can start the app
 try:
     s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
-except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied) as start_s3_err:
+except (
+    botocore.exceptions.ClientError,
+    uploadtogenestack.genestackassist.BucketPermissionDenied
+) as start_s3_err:
     raise PermissionError(
         "you must set a public S3 policy to start the app") from start_s3_err
 
@@ -216,7 +219,10 @@ def all_studies() -> Response:
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
-        except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied):
+        except (
+            botocore.exceptions.ClientError,
+            uploadtogenestack.genestackassist.BucketPermissionDenied
+        ):
             return S3_PERMISSION_DENIED
 
         except Exception as err:
@@ -327,7 +333,8 @@ def all_signals(study_id: str) -> Response:
                     new_body = f"/tmp/minimalvcf-{int(time.time()*1000)}.tsv"
 
                     uploadtogenestack.GenestackUploadUtils.writeonelinevcf(
-                        uploadtogenestack.GenestackUploadUtils.get_vcf_samples(body["data"]),
+                        uploadtogenestack.GenestackUploadUtils.get_vcf_samples(
+                            body["data"]),
                         new_body
                     )
 
@@ -356,7 +363,10 @@ def all_signals(study_id: str) -> Response:
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return not_found(err)
 
-        except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied):
+        except (
+            botocore.exceptions.ClientError,
+            uploadtogenestack.genestackassist.BucketPermissionDenied
+        ):
             return S3_PERMISSION_DENIED
 
         except Exception as err:
