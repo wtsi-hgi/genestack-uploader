@@ -48,7 +48,7 @@ gs_config = uploadtogenestack.GenestackStudy.get_gs_config(
 # can start the app
 try:
     s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
-except botocore.exceptions.ClientError as start_s3_err:
+except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied) as start_s3_err:
     raise PermissionError(
         "you must set a public S3 policy to start the app") from start_s3_err
 
@@ -216,7 +216,7 @@ def all_studies() -> Response:
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
             return FORBIDDEN
 
-        except botocore.exceptions.ClientError:
+        except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied):
             return S3_PERMISSION_DENIED
 
         except Exception as err:
@@ -320,10 +320,17 @@ def all_signals(study_id: str) -> Response:
 
                 body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
 
+                # Generating a Minimal VCF File if we need it
+                # This generates the tmp file, and replaces our data file
+                # with it
                 if body["type"].lower() == "variant" and body.get("generateMinimalVCF"):
                     new_body = f"/tmp/minimalvcf-{int(time.time()*1000)}.tsv"
+
                     uploadtogenestack.GenestackUploadUtils.writeonelinevcf(
-                        body["data"], new_body)
+                        uploadtogenestack.GenestackUploadUtils.get_vcf_samples(body["data"]),
+                        new_body
+                    )
+
                     body["data"] = new_body
 
                 # By "creating" a GenestackStudy with a study accession, we'll actually
@@ -349,7 +356,7 @@ def all_signals(study_id: str) -> Response:
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
             return not_found(err)
 
-        except botocore.exceptions.ClientError:
+        except (botocore.exceptions.ClientError, uploadtogenestack.genestackassist.BucketPermissionDenied):
             return S3_PERMISSION_DENIED
 
         except Exception as err:
