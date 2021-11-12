@@ -24,7 +24,7 @@ import os
 
 import botocore
 import paramiko
-from uploadtogenestack import S3BucketUtils
+from uploadtogenestack import S3BucketUtils, genestackassist
 
 
 class S3PublicPolicy:
@@ -51,6 +51,6 @@ class S3PublicPolicy:
     def __exit__(self, *_):
         try:
             self.s3_bucket.set_vm_only_policy()
-        except botocore.exceptions.ClientError:
+        except (botocore.exceptions.ClientError, genestackassist.BucketPermissionDenied):
             # VM Only Policy is Already Set
             pass
