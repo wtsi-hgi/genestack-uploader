@@ -29,6 +29,7 @@ import typing as T
 
 import botocore
 import flask
+import paramiko
 import requests
 import uploadtogenestack
 
@@ -50,7 +51,8 @@ try:
     s3_bucket = uploadtogenestack.S3BucketUtils(gs_config["genestackbucket"])
 except (
     botocore.exceptions.ClientError,
-    uploadtogenestack.genestackassist.BucketPermissionDenied
+    uploadtogenestack.genestackassist.BucketPermissionDenied,
+    paramiko.ssh_exception.PasswordRequiredException
 ) as start_s3_err:
     raise PermissionError(
         "you must set a public S3 policy to start the app") from start_s3_err
@@ -116,7 +118,7 @@ def all_studies() -> Response:
             # store it locally so it can get uploaded.
             # Once it has been uploaded, we don't care about it anymore,
             # so we'll just store it in /tmp
-            sample_file = f"/tmp/{body['Sample File'].replace('/', '_')}"
+            sample_file = f"/tmp/samples_{int(time.time()*1000)}.tsv"
 
             with s3.S3PublicPolicy(s3_bucket):
 
@@ -224,6 +226,10 @@ def all_studies() -> Response:
             uploadtogenestack.genestackassist.BucketPermissionDenied
         ):
             return S3_PERMISSION_DENIED
+
+        except EOFError:
+            # package asks for confirmation, user can't give it
+            return FILE_IN_BUCKET
 
         except Exception as err:
             return internal_server_error(err)
@@ -368,6 +374,10 @@ def all_signals(study_id: str) -> Response:
             uploadtogenestack.genestackassist.BucketPermissionDenied
         ):
             return S3_PERMISSION_DENIED
+
+        except EOFError:
+            # package asks for confirmation, user can't give it
+            return FILE_IN_BUCKET
 
         except Exception as err:
             return internal_server_error(err)

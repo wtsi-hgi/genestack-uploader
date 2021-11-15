@@ -24,7 +24,11 @@ import os
 
 # Configuration Settings
 
-VERSION = "0.11"
+VERSION = "0.12"
+
+# this is the end of the base url, identical to frontend/.env
+# this only affects the swagger ui
+BASE_URL = "/genestack-uploader"
 
 GENESTACK_SERVER = os.environ["GSSERVER"]
 assert GENESTACK_SERVER in ["default", "qc"]

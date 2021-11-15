@@ -25,6 +25,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 import waitress
 
 from api import api_blueprint
+import config
 
 # We're going to make our Flask app, using the root as the path to static files
 # and frontend/out as the location of our static files.
@@ -81,11 +82,11 @@ def _openapi():
 # as we want interactive swagger docs, we can get a blueprint for it
 # and register it to our app on /docs using the spec at /docs/openapi
 swaggerui_blueprint = get_swaggerui_blueprint(
-    "/docs",
-    "/docs/openapi",
+    f"{config.BASE_URL}/docs",
+    f"{config.BASE_URL}/docs/openapi",
 )
 
-app.register_blueprint(swaggerui_blueprint)
+app.register_blueprint(swaggerui_blueprint, url_prefix="/docs")
 
 # when running in pruduction, we use waitress
 # when in development, we just use Flask (if __name__ == "__main__")

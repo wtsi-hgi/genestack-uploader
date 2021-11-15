@@ -49,6 +49,7 @@ MISSING_TOKEN = create_response({"error": "missing token"}, 401)
 FORBIDDEN = create_response({"error": "forbidden"}, 403)
 S3_PERMISSION_DENIED = create_response(
     {"error": "S3 bucket permission denied"}, 403)
+FILE_IN_BUCKET = create_response({"error": "file already in bucket"}, 409)
 # NOT_IMPLEMENTED = create_response({"error": "not implemented"}, 501)
 # METHOD_NOT_ALLOWED = create_response({"error": "method not allowed"}, 405)
 
