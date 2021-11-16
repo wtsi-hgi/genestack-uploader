@@ -24,7 +24,7 @@ import os
 
 # Configuration Settings
 
-VERSION = "0.12"
+VERSION = "1.0"
 
 # this is the end of the base url, identical to frontend/.env
 # this only affects the swagger ui
