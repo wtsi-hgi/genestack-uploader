@@ -4,7 +4,7 @@ A HTTP server providing an API and a frontend for easy uploading to Genestack
 
 ## Running with Docker 🐳
 
-1. Update `frontend/.env` if needed
+1. Update `frontend/.env` and `config.py` if needed. (See `docs/spec/main-spec-updates/1.md` for discussion about base URL paths.)
 
 2. Build the image, i.e.
 
@@ -12,7 +12,7 @@ A HTTP server providing an API and a frontend for easy uploading to Genestack
 docker build -t mercury/genestack-uploader:0.1.dev .
 ```
 
-The tagging scheme used on this project is `mercury/genestack-uploader:X.Y.{prod|dev}`, where X.Y is the version number, and the final tag is `prod` or `dev`, describing which URL is specified in `.env`
+The tagging scheme used on this project is `mercury/genestack-uploader:X.Y.{prod|dev}`, where X.Y is the version number, and the final tag is `prod` or `dev`, describing which URL is specified in `.env` and `config.py`. (This is also described in more detail in `docs/spec/main-spec-updates/1.md`.)
 
 3. Run the image. You must:
     - provide the env variable `GSSERVER` with a value of either `qc` or `default`
