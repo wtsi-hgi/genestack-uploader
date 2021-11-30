@@ -73,7 +73,7 @@ const NewStudy = () => {
       var fields = t.data.template
         .filter((e) => !e.isReadOnly && e.dataType == "study")
         .map((e) => ({ name: e.name, required: e.isRequired }));
-      fields.unshift({ name: "Sample File", required: true });
+      fields.unshift({ name: "Sample File", required: false });
       setNewStudy(
         fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {
           renamedColumns: [],
