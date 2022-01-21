@@ -61,4 +61,3 @@ class S3PublicPolicy:
         except (botocore.exceptions.ClientError, genestackassist.BucketPermissionDenied):
             # VM Only Policy is Already Set
             self.logger.info("VM Only policy already set")
-            pass

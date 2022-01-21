@@ -209,8 +209,12 @@ def all_studies() -> Response:
                         ):
                             logger.info(
                                 "the rename file was fine, now we'll modify the sample file")
-                            sample_file = pathlib.Path(uploadtogenestack.GenestackUploadUtils.
-                                                       renamesamplefilecolumns(sample_file, tmp_rename_fp))
+                            sample_file = pathlib.Path(
+                                uploadtogenestack.GenestackUploadUtils.renamesamplefilecolumns(
+                                    sample_file,
+                                    tmp_rename_fp
+                                )
+                            )
 
                         else:
                             logger.error("failed to validate the sample file")
