@@ -2,7 +2,7 @@
 Genestack Uploader
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-Copyright (C) 2021 Genome Research Limited
+Copyright (C) 2021, 2022 Genome Research Limited
 
 Author: Michael Grace <mg38@sanger.ac.uk>
 
@@ -100,9 +100,12 @@ class EndpointNotFoundError(Exception):
         super().__init__("Not Found")
 
 
+class FailedToVerifyColumnRenamingError(Exception):
+    """When it fails to verify the column renaming file"""
+
+
 class SignalNotFoundError(Exception):
     """For when signal not found"""
-    ...
 
 
 class MultipleSignalsFoundError(Exception):
@@ -110,18 +113,11 @@ class MultipleSignalsFoundError(Exception):
     When multiple signals are found
     given the criteria
     """
-    ...
 
 
 class TemplateNotFoundError(Exception):
-    """
-    When a template isn't found
-    """
-    ...
+    """When a template isn't found"""
 
 
 class StudyNotFoundError(Exception):
-    """
-    When a study isn't found
-    """
-    ...
+    """When a study isn't found"""

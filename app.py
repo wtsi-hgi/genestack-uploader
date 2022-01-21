@@ -2,7 +2,7 @@
 Genestack Uploader
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-Copyright (C) 2021 Genome Research Limited
+Copyright (C) 2021, 2022 Genome Research Limited
 
 Author: Michael Grace <mg38@sanger.ac.uk>
 
@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import flask
 from flask_swagger_ui import get_swaggerui_blueprint
 import waitress
@@ -34,6 +35,8 @@ import config
 # path starting with /api.
 app = flask.Flask(__name__, static_url_path="", static_folder="frontend/out")
 app.register_blueprint(api_blueprint, url_prefix="/api")
+
+logging.basicConfig()
 
 
 @app.errorhandler(404)

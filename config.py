@@ -2,7 +2,7 @@
 Genestack Uploader
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-Copyright (C) 2021 Genome Research Limited
+Copyright (C) 2021, 2022 Genome Research Limited
 
 Author: Michael Grace <mg38@sanger.ac.uk>
 
@@ -20,7 +20,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
+import typing as T
 
 # Configuration Settings
 
@@ -34,3 +36,15 @@ GENESTACK_SERVER = os.environ["GSSERVER"]
 assert GENESTACK_SERVER in ["default", "qc"]
 
 SERVER_ENDPOINT = f"https://genestack{'-qc' if GENESTACK_SERVER == 'qc' else ''}.sanger.ac.uk"
+
+LogLevel = T.Union[str, int]
+
+_str_to_log: T.Dict[str, LogLevel] = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
+
+LOG_LEVEL: LogLevel = _str_to_log[os.getenv("LOG_LEVEL", default="INFO")]

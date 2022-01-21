@@ -2,7 +2,7 @@
 Genestack Uploader
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-Copyright (C) 2021 Genome Research Limited
+Copyright (C) 2021, 2022 Genome Research Limited
 
 Author: Michael Grace <mg38@sanger.ac.uk>
 
@@ -24,8 +24,10 @@ from collections import OrderedDict
 import csv
 import importlib.metadata
 from json.decoder import JSONDecodeError
+import logging
 import os
 from pathlib import Path
+import pathlib
 import time
 import typing as T
 
@@ -64,6 +66,9 @@ except (
 
 api_blueprint = flask.Blueprint("api", "api")
 
+logger: logging.Logger = logging.getLogger("API")
+logger.setLevel(config.LOG_LEVEL)
+
 
 @api_blueprint.app_errorhandler(404)
 def _():
@@ -99,6 +104,7 @@ def all_studies() -> Response:
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("missing token")
         return MISSING_TOKEN
 
     # ************ #
@@ -111,7 +117,10 @@ def all_studies() -> Response:
         # This should be JSON, and should actually exist
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
+            logger.error("invalid body")
             return INVALID_BODY
+
+        logger.info("starting an upload")
 
         try:
             # If we aren't given a specific Study Title, we're going to
@@ -130,6 +139,8 @@ def all_studies() -> Response:
                     sample_file = f"/tmp/samples_{int(time.time()*1000)}.tsv"
 
                     # Getting Data from S3
+                    logger.info(
+                        f"downloading sample file from S3 ({body['Sample File']}) to {sample_file}")
                     s3_bucket.download_file(body["Sample File"], sample_file)
 
                     # Reanming Sample File Columns
@@ -161,6 +172,9 @@ def all_studies() -> Response:
                     # all this is under the assumption that we're going to rename anything,
                     # hence `if len(body["renamedColumns"]) != 0:`
                     if len(body["renamedColumns"]) != 0:
+                        logger.info(
+                            f"we have some columns to rename: {body['renamedColumns']}")
+
                         with open(sample_file, encoding="UTF-8") as samples:
                             reader = csv.reader(samples, delimiter="\t")
                             headers = next(reader)
@@ -174,6 +188,9 @@ def all_studies() -> Response:
                                 })
 
                         tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
+                        logger.info(
+                            f"we're going to write the rename information to {tmp_rename_fp}")
+
                         with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
                             tmp_rename.write("old|new|fillvalue\n")
                             for col_rename in body["renamedColumns"]:
@@ -190,8 +207,17 @@ def all_studies() -> Response:
                             tmp_rename_fp,
                             sample_file
                         ):
-                            sample_file = uploadtogenestack.GenestackUploadUtils. \
-                                renamesamplefilecolumns(sample_file, tmp_rename_fp)
+                            logger.info(
+                                "the rename file was fine, now we'll modify the sample file")
+                            sample_file = pathlib.Path(uploadtogenestack.GenestackUploadUtils.
+                                                       renamesamplefilecolumns(sample_file, tmp_rename_fp))
+
+                        else:
+                            logger.error("failed to validate the sample file")
+                            return bad_request_error(FailedToVerifyColumnRenamingError())
+
+                    else:
+                        logger.info("no columns to rename")
 
                 # Although these are passed to us in our API,
                 # it would be invalid in what we pass to genestack, so we
@@ -207,11 +233,15 @@ def all_studies() -> Response:
 
                 # We can then create a new `GenestackStudy` to upload everything to Genestack
                 tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+                logging.info(f"using {tmp_fp} as the metadata file")
+
                 with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
+                    logger.info("writing to metadata file")
                     body = OrderedDict(body)
                     tmp_tsv.write("\t".join(body.keys()) + "\n")
                     tmp_tsv.write("\t".join(body.values()) + "\n")
 
+                logger.info("creating study")
                 study = uploadtogenestack.GenestackStudy(
                     samplefile=sample_file,
                     genestackserver=config.GENESTACK_SERVER,
@@ -220,31 +250,43 @@ def all_studies() -> Response:
                     ssh_key_filepath=ssh_key_path
                 )
 
+            logger.info(f"study created all good: {study.study_accession}")
             return create_response({"accession": study.study_accession}, 201)
 
         except KeyError as err:
+            logger.error("missing key")
+            logger.exception(err)
             return create_response({"error": f"missing key: {err}"}, 400)
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+            logger.error("request forbidden")
+            logger.exception(err)
             return FORBIDDEN
 
         except (
             botocore.exceptions.ClientError,
             uploadtogenestack.genestackassist.BucketPermissionDenied
-        ):
+        ) as err:
+            logger.error("S3 Bucket Permission Denied")
+            logger.exception(err)
             return S3_PERMISSION_DENIED
 
-        except EOFError:
+        except EOFError as err:
             # package asks for confirmation, user can't give it
+            logger.error("uploadtogenestack package can't read stdin")
+            logger.exception(err)
             return FILE_IN_BUCKET
 
         except Exception as err:
+            logger.error("Error")
+            logger.exception(err)
             return internal_server_error(err)
 
     # *********** #
     # GET Handler #
     # *********** #
     try:
+        logger.info("Getting all Studies")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         # Note: This doesn't take into account pagination
@@ -252,10 +294,14 @@ def all_studies() -> Response:
         studies = gsu.ApplicationsODM(gsu, None).get_all_studies()
         return create_response(studies.json()["data"])
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Request Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -267,24 +313,31 @@ def single_study(study_id: str) -> Response:
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("Request for Single Study missing Token")
         return MISSING_TOKEN
 
     study: T.Optional[requests.Response] = None
     try:
+        logger.info(f"Getting single study: {study_id}")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
         return create_response(study.json())
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except JSONDecodeError:
         if study and "Object cannot be found" in study.text:
+            logger.error(f"Study Not Found: {study_id}: {study.text}")
             return not_found(StudyNotFoundError(study.text))
         raise
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -297,17 +350,21 @@ def all_signals(study_id: str) -> Response:
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error(
+            "request for all signals (either GET or POST) with no token")
         return MISSING_TOKEN
 
     # ************ #
     # POST Handler #
     # ************ #
     if flask.request.method == "POST":
+        logger.info("POST request: let's make a new signal dataset")
 
         # As with the POST to create a new study, all the information we want
         # is in the JSON body
         body: T.Dict[str, T.Any] = flask.request.json
         if body is None:
+            logger.error("no body provided in request")
             return INVALID_BODY
 
         # The user can specify what attributes in the signal file they want to use to link
@@ -326,14 +383,19 @@ def all_signals(study_id: str) -> Response:
             # As with creating the study, genestack needs the metadata to be in a TSV file
             # with the first line being the keys, and the second line being the values
             tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
+            logger.info(f"using {tmp_fp} as the metadata file")
+
             with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
                 body["metadata"] = OrderedDict(body["metadata"])
                 tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
                 tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
+
             body["metadata"] = tmp_fp
 
             with s3.S3PublicPolicy(s3_bucket):
                 # Downloading S3 File
+                logger.info(
+                    f"downloading {body['data']} from S3 to /tmp/{body['data'].replace('/', '_')}")
                 s3_bucket.download_file(
                     body["data"], f"/tmp/{body['data'].replace('/', '_')}")
 
@@ -344,6 +406,7 @@ def all_signals(study_id: str) -> Response:
                 # with it
                 if body["type"].lower() == "variant" and body.get("generateMinimalVCF"):
                     new_body = f"/tmp/minimalvcf-{int(time.time()*1000)}.tsv"
+                    logger.info(f"generating minimal VCF {new_body}")
 
                     uploadtogenestack.GenestackUploadUtils.writeonelinevcf(
                         uploadtogenestack.GenestackUploadUtils.get_vcf_samples(
@@ -352,9 +415,12 @@ def all_signals(study_id: str) -> Response:
                     )
 
                     body["data"] = new_body
+                    logger.info("successfully made new minimal VCF")
 
                 # By "creating" a GenestackStudy with a study accession, we'll actually
                 # be able to modify the study - in our case we want to add a signal_dict
+                logger.info(f"adding signal for study {study_id}")
+
                 uploadtogenestack.GenestackStudy(
                     study_genestackaccession=study_id,
                     genestackserver=config.GENESTACK_SERVER,
@@ -363,50 +429,73 @@ def all_signals(study_id: str) -> Response:
                     ssh_key_filepath=ssh_key_path
                 )
 
+            logger.info(f"successfully made signal dataset for {study_id}")
             return CREATED
 
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+            logger.error("Forbidden")
+            logger.exception(err)
             return FORBIDDEN
 
         except (
             FileNotFoundError,
             uploadtogenestack.genestackassist.LinkingNotPossibleError
         ) as err:
+            logger.error("Bad Request")
+            logger.exception(err)
             return bad_request_error(err)
 
         except uploadtogenestack.genestackETL.StudyAccessionError as err:
+            logger.error("Study Not Found")
+            logger.exception(err)
             return not_found(err)
 
         except (
             botocore.exceptions.ClientError,
             uploadtogenestack.genestackassist.BucketPermissionDenied
-        ):
+        ) as err:
+            logger.error("S3 Bucket Permission Denied")
+            logger.exception(err)
             return S3_PERMISSION_DENIED
 
-        except EOFError:
+        except EOFError as err:
             # package asks for confirmation, user can't give it
+            logger.error("can't read stdin")
+            logger.exception(err)
             return FILE_IN_BUCKET
 
         except Exception as err:
+            logger.error("Error")
+            logger.exception(err)
             return internal_server_error(err)
 
     # *********** #
     # GET Handler #
     # *********** #
     try:
+        logger.info(f"getting info for all signals for study {study_id}")
+
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         signals = [signal for type in ["variant", "expression"]
                    for signal in gsu.get_signals_by_group(study_id, type)]
+
+        logger.info("got signals OK")
         return create_response({"studyAccession": study_id, "signals": signals})
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except uploadtogenestack.genestackETL.StudyAccessionError as err:
+        logger.error(f"Study {study_id} not found")
+        logger.exception(err)
         return not_found(err)
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -418,9 +507,11 @@ def single_signal(study_id: str, signal_id: str) -> Response:
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("request for single signal missing token")
         return MISSING_TOKEN
 
     try:
+        logger.info(f"getting info for signal {signal_id}")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
 
@@ -429,23 +520,32 @@ def single_signal(study_id: str, signal_id: str) -> Response:
                    if signal["itemId"] == signal_id]
 
         if len(signals) == 1:
+            logger.info("found 1 signal: all good")
             return create_response({"studyAccession": study_id, "signal": signals[0]})
 
         if len(signals) == 0:
+            logger.error(f"signal not found: {signal_id} on study {study_id}")
             return not_found(
                 SignalNotFoundError(
                     f"signal {signal_id} not found on study {study_id}")
             )
 
+        logger.error("multiple signals found")
         return internal_server_error(MultipleSignalsFoundError("multiple signals found"))
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except uploadtogenestack.genestackETL.StudyAccessionError as err:
+        logger.error(f"Study not found: {study_id}")
+        logger.exception(err)
         return not_found(err)
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -457,18 +557,24 @@ def get_all_templates():
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("request for all templates without token")
         return MISSING_TOKEN
 
     try:
+        logger.info("getting all templates")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         template = gsu.ApplicationsODM(gsu, None).get_all_templates()
         return create_response(template.json()["result"])
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -481,9 +587,11 @@ def get_template(template_id: str):
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("request for single template without token")
         return MISSING_TOKEN
 
     try:
+        logger.error(f"getting single template {template_id}")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         template = gsu.ApplicationsODM(
@@ -508,17 +616,24 @@ def get_template(template_id: str):
             # ¯\_(ツ)_/¯
             # Complaining Over.
 
+            logger.error("Template not Found")
+            logger.error(template.json()["error"])
             return not_found(TemplateNotFoundError(template.json()["error"]))
 
+        logger.info(f"template {template_id} found")
         return create_response({
             "accession": template_id,
             "template": template.json()["result"]
         })
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
 
 
@@ -531,17 +646,25 @@ def get_template_types():
 
     token: str = flask.request.headers.get("Genestack-API-Token")
     if not token:
+        logger.error("request for template types with missing token")
         return MISSING_TOKEN
 
     try:
+        logger.info("getting template types")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT
         )
         types = gsu.ApplicationsODM(gsu, None).get_template_types()
+
+        logger.info("happily got template types")
         return create_response(types.json()["result"])
 
-    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed):
+    except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
+        logger.error("Forbidden")
+        logger.exception(err)
         return FORBIDDEN
 
     except Exception as err:
+        logger.error("Error")
+        logger.exception(err)
         return internal_server_error(err)
