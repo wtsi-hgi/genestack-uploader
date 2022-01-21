@@ -141,7 +141,8 @@ def all_studies() -> Response:
                     # Getting Data from S3
                     logger.info(
                         f"downloading sample file from S3 ({body['Sample File']}) to {sample_file}")
-                    s3_bucket.download_file(body["Sample File"], sample_file)
+                    s3_bucket.download_file(body["Sample File"].strip().strip(
+                        f"s3://{gs_config['genestackbucket']}/"), sample_file)
 
                     # Reanming Sample File Columns
 
@@ -180,7 +181,7 @@ def all_studies() -> Response:
                             headers = next(reader)
 
                         for header in headers:
-                            if header not in [x["old"] for x in body["renamedColumns"]]:
+                            if header not in [x["old"].strip() for x in body["renamedColumns"]]:
                                 body["renamedColumns"].append({
                                     "old": header,
                                     "new": header,
@@ -196,10 +197,10 @@ def all_studies() -> Response:
                             for col_rename in body["renamedColumns"]:
                                 tmp_rename.write(
                                     "|".join([
-                                        col_rename["old"],
-                                        col_rename["new"],
-                                        col_rename["colValue"]
-                                        if col_rename["colValue"] != ""
+                                        col_rename["old"].strip(),
+                                        col_rename["new"].strip(),
+                                        col_rename["colValue"].strip()
+                                        if col_rename["colValue"].strip() != ""
                                         else "[fillvalue]"
                                     ]) + "\n")
 
@@ -242,8 +243,10 @@ def all_studies() -> Response:
                 with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
                     logger.info("writing to metadata file")
                     body = OrderedDict(body)
-                    tmp_tsv.write("\t".join(body.keys()) + "\n")
-                    tmp_tsv.write("\t".join(body.values()) + "\n")
+                    tmp_tsv.write("\t".join(x.strip()
+                                  for x in body.keys()) + "\n")
+                    tmp_tsv.write("\t".join(x.strip()
+                                  for x in body.values()) + "\n")
 
                 logger.info("creating study")
                 study = uploadtogenestack.GenestackStudy(
@@ -325,7 +328,7 @@ def single_study(study_id: str) -> Response:
         logger.info(f"Getting single study: {study_id}")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
-        study = gsu.ApplicationsODM(gsu, None).get_study(study_id)
+        study = gsu.ApplicationsODM(gsu, None).get_study(study_id.strip())
         return create_response(study.json())
 
     except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
@@ -380,7 +383,7 @@ def all_signals(study_id: str) -> Response:
         # {"column": value} for value in list
         try:
             body["linkingattribute"] = [
-                {"column": x} for x in body["linkingattribute"] if x != "Sample Source ID"]
+                {"column": x.strip()} for x in body["linkingattribute"] if x != "Sample Source ID"]
 
             # Creating Metadata TSV
 
@@ -391,24 +394,26 @@ def all_signals(study_id: str) -> Response:
 
             with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
                 body["metadata"] = OrderedDict(body["metadata"])
-                tmp_tsv.write("\t".join(body["metadata"].keys()) + "\n")
-                tmp_tsv.write("\t".join(body["metadata"].values()) + "\n")
+                tmp_tsv.write("\t".join(x.strip()
+                              for x in body["metadata"].keys()) + "\n")
+                tmp_tsv.write("\t".join(x.strip()
+                              for x in body["metadata"].values()) + "\n")
 
             body["metadata"] = tmp_fp
 
             with s3.S3PublicPolicy(s3_bucket):
                 # Downloading S3 File
                 logger.info(
-                    f"downloading {body['data']} from S3 to /tmp/{body['data'].replace('/', '_')}")
+                    f"downloading {body['data']} from S3 to /tmp/{body['data'].strip().replace('/', '_')}")
                 s3_bucket.download_file(
-                    body["data"], f"/tmp/{body['data'].replace('/', '_')}")
+                    body["data"].strip().strip(f"s3://{gs_config['genestackbucket']}/"), f"/tmp/{body['data'].strip().replace('/', '_')}")
 
-                body["data"] = f"/tmp/{body['data'].replace('/', '_')}"
+                body["data"] = f"/tmp/{body['data'].strip().replace('/', '_')}"
 
                 # Generating a Minimal VCF File if we need it
                 # This generates the tmp file, and replaces our data file
                 # with it
-                if body["type"].lower() == "variant" and body.get("generateMinimalVCF"):
+                if body["type"].strip().lower() == "variant" and body.get("generateMinimalVCF"):
                     new_body = f"/tmp/minimalvcf-{int(time.time()*1000)}.tsv"
                     logger.info(f"generating minimal VCF {new_body}")
 
@@ -423,10 +428,10 @@ def all_signals(study_id: str) -> Response:
 
                 # By "creating" a GenestackStudy with a study accession, we'll actually
                 # be able to modify the study - in our case we want to add a signal_dict
-                logger.info(f"adding signal for study {study_id}")
+                logger.info(f"adding signal for study {study_id.strip()}")
 
                 uploadtogenestack.GenestackStudy(
-                    study_genestackaccession=study_id,
+                    study_genestackaccession=study_id.strip(),
                     genestackserver=config.GENESTACK_SERVER,
                     genestacktoken=token,
                     signal_dict=body,
@@ -482,10 +487,10 @@ def all_signals(study_id: str) -> Response:
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         signals = [signal for type in ["variant", "expression"]
-                   for signal in gsu.get_signals_by_group(study_id, type)]
+                   for signal in gsu.get_signals_by_group(study_id.strip(), type)]
 
         logger.info("got signals OK")
-        return create_response({"studyAccession": study_id, "signals": signals})
+        return create_response({"studyAccession": study_id.strip(), "signals": signals})
 
     except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
         logger.error("Forbidden")
@@ -520,12 +525,12 @@ def single_signal(study_id: str, signal_id: str) -> Response:
             token=token, server=config.SERVER_ENDPOINT)
 
         signals = [signal for type in ["variant", "expression"]
-                   for signal in gsu.get_signals_by_group(study_id, type)
-                   if signal["itemId"] == signal_id]
+                   for signal in gsu.get_signals_by_group(study_id.strip(), type)
+                   if signal["itemId"] == signal_id.strip()]
 
         if len(signals) == 1:
             logger.info("found 1 signal: all good")
-            return create_response({"studyAccession": study_id, "signal": signals[0]})
+            return create_response({"studyAccession": study_id.strip(), "signal": signals[0]})
 
         if len(signals) == 0:
             logger.error(f"signal not found: {signal_id} on study {study_id}")
@@ -599,7 +604,7 @@ def get_template(template_id: str):
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         template = gsu.ApplicationsODM(
-            gsu, None).get_template_detail(template_id)
+            gsu, None).get_template_detail(template_id.strip())
 
         if "Failed to found template" in template.text:
             # OK, here we go
@@ -626,7 +631,7 @@ def get_template(template_id: str):
 
         logger.info(f"template {template_id} found")
         return create_response({
-            "accession": template_id,
+            "accession": template_id.strip(),
             "template": template.json()["result"]
         })
 
