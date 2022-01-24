@@ -141,8 +141,8 @@ def all_studies() -> Response:
                     # Getting Data from S3
                     logger.info(
                         f"downloading sample file from S3 ({body['Sample File']}) to {sample_file}")
-                    s3_bucket.download_file(body["Sample File"].strip().strip(
-                        f"s3://{gs_config['genestackbucket']}/"), sample_file)
+                    s3_bucket.download_file(body["Sample File"].strip().replace(
+                        f"s3://{gs_config['genestackbucket']}/", ""), sample_file)
 
                     # Reanming Sample File Columns
 
@@ -269,6 +269,11 @@ def all_studies() -> Response:
             logger.error("request forbidden")
             logger.exception(err)
             return FORBIDDEN
+
+        except FileNotFoundError as err:
+            logger.error("File Not Found")
+            logger.exception(err)
+            return not_found(err)
 
         except (
             botocore.exceptions.ClientError,
@@ -406,7 +411,7 @@ def all_signals(study_id: str) -> Response:
                 logger.info(
                     f"downloading {body['data']} from S3 to /tmp/{body['data'].strip().replace('/', '_')}")
                 s3_bucket.download_file(
-                    body["data"].strip().strip(f"s3://{gs_config['genestackbucket']}/"), f"/tmp/{body['data'].strip().replace('/', '_')}")
+                    body["data"].strip().replace(f"s3://{gs_config['genestackbucket']}/", ""), f"/tmp/{body['data'].strip().replace('/', '_')}")
 
                 body["data"] = f"/tmp/{body['data'].strip().replace('/', '_')}"
 
@@ -446,10 +451,12 @@ def all_signals(study_id: str) -> Response:
             logger.exception(err)
             return FORBIDDEN
 
-        except (
-            FileNotFoundError,
-            uploadtogenestack.genestackassist.LinkingNotPossibleError
-        ) as err:
+        except FileNotFoundError as err:
+            logger.error("File Not Found")
+            logger.exception(err)
+            return not_found(err)
+
+        except uploadtogenestack.genestackassist.LinkingNotPossibleError as err:
             logger.error("Bad Request")
             logger.exception(err)
             return bad_request_error(err)
