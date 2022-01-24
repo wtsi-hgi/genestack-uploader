@@ -273,7 +273,7 @@ def all_studies() -> Response:
         except FileNotFoundError as err:
             logger.error("File Not Found")
             logger.exception(err)
-            return not_found(err)
+            return bad_request_error(err)
 
         except (
             botocore.exceptions.ClientError,
@@ -451,12 +451,10 @@ def all_signals(study_id: str) -> Response:
             logger.exception(err)
             return FORBIDDEN
 
-        except FileNotFoundError as err:
-            logger.error("File Not Found")
-            logger.exception(err)
-            return not_found(err)
-
-        except uploadtogenestack.genestackassist.LinkingNotPossibleError as err:
+        except (
+            FileNotFoundError,
+            uploadtogenestack.genestackassist.LinkingNotPossibleError
+            ) as err:
             logger.error("Bad Request")
             logger.exception(err)
             return bad_request_error(err)
