@@ -78,7 +78,9 @@ logger: logging.Logger = logging.getLogger("API")
 logger.setLevel(config.LOG_LEVEL)
 
 all_jobs: T.Dict[uuid.UUID, uploader.GenestackUploadJob] = {}
-jobs_queue: "multiprocessing.Queue[uploader.GenestackUploadJob]" = multiprocessing.Queue()
+jobs_queue: "multiprocessing.Queue[uploader.GenestackUploadJob]" = multiprocessing.Queue(
+)
+
 
 def start_multiproc():
     _jobs_process: multiprocessing.Process = multiprocessing.Process(
@@ -86,6 +88,7 @@ def start_multiproc():
         args=(jobs_queue,)
     )
     _jobs_process.start()
+
 
 @api_blueprint.app_errorhandler(404)
 def _():
@@ -128,10 +131,11 @@ def all_studies() -> Response:
     # POST Handler #
     # ************ #
     if flask.request.method == "POST":
-        _job = uploader.GenestackUploadJob(uploader.JobType.Study, token, flask.request.json)
+        _job = uploader.GenestackUploadJob(
+            uploader.JobType.Study, token, flask.request.json)
         jobs_queue.put(_job)
         all_jobs[_job.uuid] = _job
-        
+
         return {"jobId": _job.uuid}, 202
 
     # *********** #
@@ -212,10 +216,11 @@ def all_signals(study_id: str) -> Response:
     if flask.request.method == "POST":
         logger.info("POST request: let's make a new signal dataset")
 
-        _job = uploader.GenestackUploadJob(uploader.JobType.Signal, token, flask.request.json)
+        _job = uploader.GenestackUploadJob(
+            uploader.JobType.Signal, token, flask.request.json)
         jobs_queue.put(_job)
         all_jobs[_job.uuid] = _job
-        
+
         return {"jobId": _job.uuid}, 202
 
     # *********** #
@@ -417,6 +422,7 @@ def get_template_types():
         logger.error("Error")
         logger.exception(err)
         return internal_server_error(err)
+
 
 @api_blueprint.route("/jobs/<job_uuid>", methods=["GET"])
 def get_job(job_uuid: str):

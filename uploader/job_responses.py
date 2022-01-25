@@ -28,8 +28,11 @@ JobResponse = T.Tuple[JobStatus, T.Dict[str, T.Any]]
 
 INVALID_BODY: JobResponse = JobStatus.Failed, {"error": "no valid json body"}
 FORBIDDEN: JobResponse = JobStatus.Failed, {"error": "forbidden"}
-S3_PERMISSION_DENIED: JobResponse = JobStatus.Failed, {"error": "S3 bucket permission denied"}
-FILE_IN_BUCKET: JobResponse = JobStatus.Failed, {"error": "file already in bucket"}
+S3_PERMISSION_DENIED: JobResponse = JobStatus.Failed, {
+    "error": "S3 bucket permission denied"}
+FILE_IN_BUCKET: JobResponse = JobStatus.Failed, {
+    "error": "file already in bucket"}
+
 
 def bad_request_error(err: Exception) -> JobResponse:
     return JobStatus.Failed, {
@@ -38,10 +41,12 @@ def bad_request_error(err: Exception) -> JobResponse:
         "detail": err.args
     }
 
+
 def study_created(accession: str) -> JobResponse:
     return JobStatus.Completed, {
         "accession": accession
     }
+
 
 def signal_created(study_accession: str) -> JobResponse:
     return JobStatus.Completed, {
@@ -49,12 +54,14 @@ def signal_created(study_accession: str) -> JobResponse:
         "study_accession": study_accession
     }
 
+
 def other_error(err: Exception) -> JobResponse:
     return JobStatus.Failed, {
         "error": "error",
         "name": err.__class__.__name__,
         "detail": err.args
     }
+
 
 def not_found(err: Exception) -> JobResponse:
     return JobStatus.Failed, {

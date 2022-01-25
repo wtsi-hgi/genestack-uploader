@@ -20,5 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 class FailedToVerifyColumnRenamingError(Exception):
     """When it fails to verify the column renaming file"""

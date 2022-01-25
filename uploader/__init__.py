@@ -25,6 +25,7 @@ import enum
 import json
 import logging
 import multiprocessing
+import os
 import typing as T
 import uuid
 from uploader.common import JobStatus
@@ -32,25 +33,32 @@ from uploader.signal import new_signal
 
 from uploader.study import new_study
 
+
 class InvalidJobStatusProgressionError(Exception):
     """raised when the update to a job status is invalid
     queued jobs must be set to running
     running jobs must be set to completed or failed
     completed or failed jobs can't be changed"""
 
+
 class JobAlreadyStartedError(Exception):
     """raised if an already started job is called to start"""
+
 
 class JobNotStartedError(Exception):
     """raised when a job hasn't been started yet and
     we try to get info on it assuming it's started"""
 
+
 class JobNotFinishedError(Exception):
     """raised when a job hasn't finished and we try
     to get info from it assuming it's finished"""
+
+
 class JobType(enum.Enum):
     Study = new_study
     Signal = new_signal
+
 
 class GenestackUploadJob:
     """a representaion of an uploading job"""
@@ -88,7 +96,8 @@ class GenestackUploadJob:
         self._start_time = datetime.datetime.now()
         self._write_to_file()
 
-        finish_status, output = self._job_type(self._token, self._body, self.logger, self.__class__.env, self._study_id) # type: ignore
+        finish_status, output = self._job_type(
+            self._token, self._body, self.logger, self.__class__.env, self._study_id)  # type: ignore
         self.finish(finish_status, output)
 
     def finish(self, state: JobStatus, output: T.Any) -> None:
@@ -107,7 +116,7 @@ class GenestackUploadJob:
 
     @status.setter
     def status(self, status: JobStatus) -> None:
-        if isinstance(status, JobStatus): # type: ignore
+        if isinstance(status, JobStatus):  # type: ignore
             if self.status == JobStatus.Queued and status != JobStatus.Running:
                 raise InvalidJobStatusProgressionError
 
@@ -158,14 +167,19 @@ class GenestackUploadJob:
         return data
 
     def _write_to_file(self):
-        with open(f".jobs/{self._uuid}", "w") as f:
-            print(json.dumps(self.dict))
-            f.write(json.dumps(self.dict))
+        try:
+            with open(f".jobs/{self._uuid}", "w") as f:
+                print(json.dumps(self.dict))
+                f.write(json.dumps(self.dict))
+        except FileNotFoundError:
+            os.mkdir(".jobs")
+            self._write_to_file()
 
     @property
     def json(self) -> T.Dict[str, T.Any]:
         with open(f".jobs/{self._uuid}") as f:
             return json.loads(f.read())
+
 
 def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:
     while True:

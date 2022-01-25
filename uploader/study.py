@@ -33,6 +33,7 @@ import uploadtogenestack
 from uploader import exceptions, job_responses, s3
 from uploader.job_responses import JobResponse
 
+
 def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any], _) -> JobResponse:
     # Here we going to be creating a new study
     # The information we need will be stored in the response body
@@ -63,7 +64,7 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                 # Getting Data from S3
                 logger.info(
                     f"downloading sample file from S3 ({body['Sample File']}) to {sample_file}")
-        
+
                 gs_config = env["gs_config"]
                 s3_bucket.download_file(body["Sample File"].strip().replace(
                     f"s3://{gs_config['genestackbucket']}/", ""), sample_file)
@@ -128,7 +129,8 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                             "colValue": col["value"]
                         })
 
-                    tmp_rename_fp: Path = Path(f"/tmp/gs-rename-{int(time.time()*1000)}.tsv")
+                    tmp_rename_fp: Path = Path(
+                        f"/tmp/gs-rename-{int(time.time()*1000)}.tsv")
                     logger.info(
                         f"we're going to write the rename information to {tmp_rename_fp}")
 
@@ -185,9 +187,9 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                 logger.info("writing to metadata file")
                 body = OrderedDict(body)
                 tmp_tsv.write("\t".join(x.strip()
-                                for x in body.keys()) + "\n")
+                                        for x in body.keys()) + "\n")
                 tmp_tsv.write("\t".join(x.strip()
-                                for x in body.values()) + "\n")
+                                        for x in body.values()) + "\n")
 
             logger.info("creating study")
             study = uploadtogenestack.GenestackStudy(
@@ -198,8 +200,8 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                 ssh_key_filepath=env["ssh_key_path"]
             )
 
-        logger.info(f"study created all good: {study.study_accession}") # type: ignore
-        return job_responses.study_created(study.study_accession) # type: ignore
+        logger.info(f"study created all good: {study.study_accession}")
+        return job_responses.study_created(study.study_accession)
 
     except KeyError as err:
         logger.error("missing key")

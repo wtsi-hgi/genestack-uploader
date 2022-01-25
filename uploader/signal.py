@@ -30,6 +30,7 @@ from uploader.job_responses import JobResponse
 
 import uploadtogenestack
 
+
 def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any], study_id: str) -> JobResponse:
     # As with the POST to create a new study, all the information we want
     # is in the JSON body
@@ -58,9 +59,9 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
         with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
             body["metadata"] = OrderedDict(body["metadata"])
             tmp_tsv.write("\t".join(x.strip()
-                            for x in body["metadata"].keys()) + "\n")
+                                    for x in body["metadata"].keys()) + "\n")
             tmp_tsv.write("\t".join(x.strip()
-                            for x in body["metadata"].values()) + "\n")
+                                    for x in body["metadata"].values()) + "\n")
 
         body["metadata"] = tmp_fp
 
@@ -70,7 +71,7 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
             # Downloading S3 File
             logger.info(
                 f"downloading {body['data']} from S3 to /tmp/{body['data'].strip().replace('/', '_')}")
-            
+
             gs_config = env["gs_config"]
             s3_bucket.download_file(
                 body["data"].strip().replace(f"s3://{gs_config['genestackbucket']}/", ""), f"/tmp/{body['data'].strip().replace('/', '_')}")
@@ -116,7 +117,7 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
     except (
         FileNotFoundError,
         uploadtogenestack.genestackassist.LinkingNotPossibleError
-        ) as err:
+    ) as err:
         logger.error("Bad Request")
         logger.exception(err)
         return job_responses.bad_request_error(err)
