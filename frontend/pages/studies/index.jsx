@@ -76,7 +76,9 @@ const NewStudy = () => {
       fields.unshift({ name: "Sample File", required: false });
       setNewStudy(
         fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {
+          addedColumns: [],
           renamedColumns: [],
+          deletedColumns: []
         })
       );
       setTemplateFields(fields);
@@ -199,13 +201,65 @@ const NewStudy = () => {
         ))}
         {templateFields.length != 0 && (
           <div>
+            <label>Add Columns</label>
+            <br />
+            {newStudy.addedColumns.map((val, idx) => (
+              <div
+                className="form-control"
+                key={`adding-${idx}-${val.title}`}
+              >
+                <input
+                  type="text"
+                  defaultValue={val.title}
+                  placeholder="Title"
+                  onBlur={(e) => {
+                    let tmp_added = newStudy.addedColumns;
+                    tmp_added[idx].title = e.target.value;
+                    setNewStudy({...newStudy, addedColumns: tmp_added});
+                  }}
+                />
+                <input
+                  type="text"
+                  defaultValue={val.value}
+                  placeholder="Value"
+                  onBlur={(e) => {
+                    let tmp_added = newStudy.addedColumns;
+                    tmp_added[idx].value = e.target.value;
+                    setNewStudy({ ...newStudy, addedColumns: tmp_added})
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => {
+                    let tmp = newStudy.addedColumns;
+                    tmp.splice(idx, 1);
+                    setNewStudy({...newStudy, addedColumns: tmp})
+                  }}
+                  >
+                    <Trash />
+                  </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                setNewStudy({
+                  ...newStudy,
+                  addedColumns: [
+                    ...newStudy.addedColumns,
+                    { title: "", value: "" },
+                  ],
+                });
+              }}
+            >
+              Add
+            </button>
+            <br />
+
             <label>Rename Columns</label>
             <br />
-            {newStudy.renamedColumns.length != 0 && (
-              <small className="text-secondary text-sm">
-                Leave Column Value blank for default.
-              </small>
-            )}
             {newStudy.renamedColumns.map((val, idx) => (
               <div
                 className="form-control"
@@ -231,16 +285,6 @@ const NewStudy = () => {
                     setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
                 />
-                <input
-                  type="text"
-                  defaultValue={val.colValue}
-                  placeholder="Column Value"
-                  onBlur={(e) => {
-                    var tmp_renames = newStudy.renamedColumns;
-                    tmp_renames[idx].colValue = e.target.value;
-                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
-                  }}
-                />
                 <button
                   type="button"
                   className="btn btn-sm btn-danger"
@@ -262,7 +306,7 @@ const NewStudy = () => {
                   ...newStudy,
                   renamedColumns: [
                     ...newStudy.renamedColumns,
-                    { old: "", new: "", colValue: "" },
+                    { old: "", new: "" },
                   ],
                 });
               }}
@@ -270,6 +314,51 @@ const NewStudy = () => {
               Add
             </button>
             <br />
+
+            <label>Delete Columns</label>
+            <br />
+            {newStudy.deletedColumns.map((val, idx) => (
+              <div
+                className="form-control"
+                key={`deleting-${idx}-${val}`}
+              >
+                <input
+                  type="text"
+                  defaultValue={val}
+                  placeholder="Column Title"
+                  onBlur={(e) => {
+                    let tmp_deletes = newStudy.deletedColumns;
+                    tmp_deletes[idx] = e.target.value;
+                    setNewStudy({...newStudy, deletedColumns: tmp_deletes})
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => {
+                    let tmp = newStudy.deletedColumns;
+                    tmp.splice(idx, 1);
+                    setNewStudy({...newStudy, deletedColumns: tmp})
+                  }}
+                >
+                  <Trash />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                setNewStudy({
+                  ...newStudy,
+                  deletedColumns: [...newStudy.deletedColumns, ""]
+                });
+              }}
+            >
+              Add
+            </button>
+            <br />
+
             <br />
             <button
               type="button"
