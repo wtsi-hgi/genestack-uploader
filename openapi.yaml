@@ -347,9 +347,23 @@ components:
           type: string
           description: location on the S3 bucket associated to the currently in use Genestack server
           example: uploadDirectory/samples.tsv
-        Renamed Columns:
+        addedColumns:
           type: array
-          description: allow a new sample file to be generated with renamed columns. leaving `colValue` blank (`""`) will use the values currently in the column. you can add a column by by leaving the `old` value blank (`""`)
+          description: allow a new sample file to be generated with additional columns, containing this column title and value
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                description: the name you want to give the column
+                example: year
+              value:
+                type: string
+                description: the value you want in the cells of the column
+                example: 2022
+        renamedColumns:
+          type: array
+          description: allow a new sample file to be generated with renamed columns
           items:
             type: object
             properties:
@@ -361,10 +375,13 @@ components:
                 type: string
                 description: the name you want to give the column
                 example: col1
-              colValue:
-                type: string
-                description: the value you want in the cells of the column. leave blank (`""`) for the currently used values
-                example: ""
+        deletedColumns:
+          type: array
+          description: column titles of columns in sample file you want deleted
+          items:
+            type: string
+            description: column titles
+            example: col0
       additionalProperties:
         type: string
 

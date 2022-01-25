@@ -172,26 +172,43 @@ def all_studies() -> Response:
 
                     # all this is under the assumption that we're going to rename anything,
                     # hence `if len(body["renamedColumns"]) != 0:`
-                    if len(body["renamedColumns"]) != 0:
-                        logger.info(
-                            f"we have some columns to rename: {body['renamedColumns']}")
+                    if len(body["renamedColumns"]) + len(body["addedColumns"]) + len(body["deletedColumns"]) != 0:
+                        logger.info("we have some columns to change")
+                        logger.info(f"Change: {body['renamedColumns']}")
+                        logger.info(f"Insert: {body['addedColumns']}")
+                        logger.info(f"Delete: {body['deletedColumns']}")
 
                         with open(sample_file, encoding="UTF-8") as samples:
                             reader = csv.reader(samples, delimiter="\t")
                             headers = next(reader)
 
+                        # Everything's going to go into the renamedColumns dict
+                        # First, we need to add [fillvalue] to the values as the file requires
+                        for col in body["renamedColumns"]:
+                            col["colValue"] = "[fillvalue]"
+
+                        # We'll now go through the columns left in the samples file, and add them if they're not to be deleted
                         for header in headers:
-                            if header not in [x["old"].strip() for x in body["renamedColumns"]]:
+                            if header not in [x["old"].strip() for x in body["renamedColumns"]] and header not in [x.strip() for x in body["deletedColumns"]]:
                                 body["renamedColumns"].append({
                                     "old": header,
                                     "new": header,
-                                    "colValue": ""
+                                    "colValue": "[fillvalue]"
                                 })
+
+                        # We'll now add the columns that are getting added
+                        for col in body["addedColumns"]:
+                            body["renamedColumns"].append({
+                                "old": "",
+                                "new": col["title"],
+                                "colValue": col["value"]
+                            })
 
                         tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
                         logger.info(
                             f"we're going to write the rename information to {tmp_rename_fp}")
 
+                        # We can now open the file, and write all that information to it
                         with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
                             tmp_rename.write("old|new|fillvalue\n")
                             for col_rename in body["renamedColumns"]:
@@ -200,8 +217,6 @@ def all_studies() -> Response:
                                         col_rename["old"].strip(),
                                         col_rename["new"].strip(),
                                         col_rename["colValue"].strip()
-                                        if col_rename["colValue"].strip() != ""
-                                        else "[fillvalue]"
                                     ]) + "\n")
 
                         if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
@@ -229,6 +244,8 @@ def all_studies() -> Response:
                 # need rid of it now we've downloaded the file from S3
                 del body["Sample File"]
                 del body["renamedColumns"]
+                del body["addedColumns"]
+                del body["deletedColumns"]
 
                 # Creating Metadata TSV
 
