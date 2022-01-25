@@ -56,8 +56,12 @@ class JobNotFinishedError(Exception):
 
 
 class JobType(enum.Enum):
-    Study = new_study
-    Signal = new_signal
+    """JobType enum represents whether the job is for
+    creating a study or signal dataset, and the value is
+    the function to call"""
+
+    Study = new_study  # pylint: disable=invalid-name
+    Signal = new_signal  # pylint: disable=invalid-name
 
 
 class GenestackUploadJob:
@@ -67,9 +71,23 @@ class GenestackUploadJob:
 
     @classmethod
     def add_env(cls, key: str, val: T.Any) -> None:
+        """add a key-value pair to the environment held
+        by all jobs
+
+        Args:
+            key: str
+            val: Any
+        """
         cls.env[key] = val
 
-    def __init__(self, job_type: JobType, token: str, body: T.Dict[str, T.Any], study_id: str = None) -> None:
+    def __init__(
+        self,
+        job_type: JobType,
+        token: str,
+        body: T.Dict[str, T.Any],
+        study_id: T.Optional[str] = None
+    ) -> None:
+
         self._status: JobStatus = JobStatus.Queued
         self._start_time: T.Optional[datetime.datetime] = None
         self._end_time: T.Optional[datetime.datetime] = None
@@ -82,12 +100,19 @@ class GenestackUploadJob:
 
         self._uuid = uuid.uuid4()
 
-        self.logger = logging.getLogger(str(self.uuid))
-        self.logger.setLevel(logging.INFO)
+        self.logger: logging.Logger
 
         self._write_to_file()
 
     def start(self) -> None:
+        """start the job
+
+        note: will block until job is done
+        """
+        # loggers defined here, so in same process as
+        # where the logging will happen
+        self.logger = logging.getLogger(str(self.uuid))
+        self.logger.setLevel(logging.INFO)
         self.logger.info("starting job")
         if self.status != JobStatus.Queued:
             raise JobAlreadyStartedError
@@ -96,11 +121,21 @@ class GenestackUploadJob:
         self._start_time = datetime.datetime.now()
         self._write_to_file()
 
-        finish_status, output = self._job_type(
-            self._token, self._body, self.logger, self.__class__.env, self._study_id)  # type: ignore
+        finish_status: JobStatus
+        finish_status, output = self._job_type(  # type: ignore
+            self._token, self._body, self.logger, self.__class__.env, self._study_id)
+
+        self.logger.info(f"job done: {finish_status.value}: {output}")
         self.finish(finish_status, output)
 
     def finish(self, state: JobStatus, output: T.Any) -> None:
+        """update the internal states of the job when it
+        finishes
+
+        Args:
+            state: JobStatus - the state the job finishes in
+            output: Any - the output of the job for the user
+        """
         self.status = state
         self._output = output
         self._end_time = datetime.datetime.now()
@@ -108,10 +143,12 @@ class GenestackUploadJob:
 
     @property
     def uuid(self) -> uuid.UUID:
+        """returns the job's UUID"""
         return self._uuid
 
     @property
     def status(self) -> JobStatus:
+        """returns the job's status"""
         return self._status
 
     @status.setter
@@ -120,7 +157,10 @@ class GenestackUploadJob:
             if self.status == JobStatus.Queued and status != JobStatus.Running:
                 raise InvalidJobStatusProgressionError
 
-            if self.status == JobStatus.Running and status not in {JobStatus.Completed, JobStatus.Failed}:
+            if self.status == JobStatus.Running and status not in {
+                JobStatus.Completed,
+                JobStatus.Failed
+            }:
                 raise InvalidJobStatusProgressionError
 
             if self.status in {JobStatus.Completed, JobStatus.Failed}:
@@ -132,6 +172,8 @@ class GenestackUploadJob:
 
     @property
     def start_time(self) -> datetime.datetime:
+        """if the job has a start time, return it,
+        otherwise raise JobNotStartedError"""
         if self._start_time:
             return self._start_time
 
@@ -139,6 +181,8 @@ class GenestackUploadJob:
 
     @property
     def end_time(self) -> datetime.datetime:
+        """if the job has an end time, return it,
+        otherwise raise JobNotFinishedError"""
         if self._end_time:
             return self._end_time
 
@@ -146,6 +190,8 @@ class GenestackUploadJob:
 
     @property
     def output(self) -> T.Any:
+        """if the job has finished, return it,
+        otherwise raise JobNotFinishedError"""
         if self.status in {JobStatus.Completed, JobStatus.Failed}:
             return self._output
 
@@ -153,6 +199,14 @@ class GenestackUploadJob:
 
     @property
     def dict(self) -> T.Dict[str, T.Any]:
+        """return the job's information as
+        a dictionary
+
+        Note: when used in multiprocessing, if
+        you call this from another process, you'll
+        be calling the wrong object, and this won't be
+        correct. use `json`"""
+
         data = {
             "status": self.status.value,
         }
@@ -167,21 +221,41 @@ class GenestackUploadJob:
         return data
 
     def _write_to_file(self):
+        """write the job's information to the file
+        .jobs/{uuid} as JSON"""
         try:
-            with open(f".jobs/{self._uuid}", "w") as f:
-                print(json.dumps(self.dict))
-                f.write(json.dumps(self.dict))
+            with open(f".jobs/{self._uuid}", "w", encoding="utf-8") as out_file:
+                out_file.write(json.dumps(self.dict))
         except FileNotFoundError:
             os.mkdir(".jobs")
             self._write_to_file()
 
     @property
     def json(self) -> T.Dict[str, T.Any]:
-        with open(f".jobs/{self._uuid}") as f:
-            return json.loads(f.read())
+        """read the job's information from the
+        file written using _write_to_file
+
+        Returns: Dict[str, Any]
+
+        This method is preferred over `dict`
+        as it reads from the file, so will work
+        across objects, so long as they have the
+        same UUID"""
+        with open(f".jobs/{self._uuid}", encoding="utf-8") as in_file:
+            return json.loads(in_file.read())
 
 
 def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:
+    """job_handler runs a loop to block
+    until it gets a job on the queue, then
+    starts that job
+
+    Args:
+        jobs_queue: multiprocessing.Queue[GenestackUploadJob]
+
+    Note: this waits for the current job to finish
+    before starting the next
+    """
     while True:
         job = jobs_queue.get(block=True)
         job.start()

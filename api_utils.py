@@ -44,16 +44,8 @@ def create_response(data: T.Any, code: int = 200) -> Response:
     }, code
 
 
-INVALID_BODY = create_response({"error": "no valid json body"}, 400)
 MISSING_TOKEN = create_response({"error": "missing token"}, 401)
 FORBIDDEN = create_response({"error": "forbidden"}, 403)
-S3_PERMISSION_DENIED = create_response(
-    {"error": "S3 bucket permission denied"}, 403)
-FILE_IN_BUCKET = create_response({"error": "file already in bucket"}, 409)
-# NOT_IMPLEMENTED = create_response({"error": "not implemented"}, 501)
-# METHOD_NOT_ALLOWED = create_response({"error": "method not allowed"}, 405)
-
-CREATED = create_response("Created", 201)
 
 
 def internal_server_error(err: Exception):
@@ -66,18 +58,6 @@ def internal_server_error(err: Exception):
         "name": err.__class__.__name__,
         "detail": err.args
     }, 500)
-
-
-def bad_request_error(err: Exception):
-    """
-        400 Bad Request Error Response
-    """
-
-    return create_response({
-        "error": "bad request",
-        "name": err.__class__.__name__,
-        "detail": err.args
-    }, 400)
 
 
 def not_found(err: Exception) -> Response:
@@ -98,10 +78,6 @@ class EndpointNotFoundError(Exception):
 
     def __init__(self) -> None:
         super().__init__("Not Found")
-
-
-class FailedToVerifyColumnRenamingError(Exception):
-    """When it fails to verify the column renaming file"""
 
 
 class SignalNotFoundError(Exception):

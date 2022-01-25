@@ -20,16 +20,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from collections import OrderedDict
-import csv
 import importlib.metadata
 from json.decoder import JSONDecodeError
 import logging
 import multiprocessing
 import os
-from pathlib import Path
-import pathlib
-import time
 import typing as T
 import uuid
 
@@ -41,7 +36,6 @@ import uploadtogenestack
 
 from api_utils import *  # pylint: disable=wildcard-import
 import config
-import uploader.s3 as s3
 import uploader
 
 # first up, we need to grab the genestack configuration
