@@ -31,7 +31,9 @@ export const HelpModal = ({ header, helpText, handleClose, show }) => {
       <Modal.Body>
         {helpText}
         <hr />
-        <a href="https://confluence.sanger.ac.uk/display/HGI/Genestack+Uploader+App">More on Confluence</a>
+        <a href="https://confluence.sanger.ac.uk/display/HGI/Genestack+Uploader+App">
+          More on Confluence
+        </a>
       </Modal.Body>
       <Modal.Footer>
         <button

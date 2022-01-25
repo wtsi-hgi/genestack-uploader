@@ -173,8 +173,13 @@ export default function Home() {
 
       <footer className={styles.footer}>
         <small>
-          <div className="text-center">The blue help button at the top of pages will give you information about the page.</div>
-          <a href="https://confluence.sanger.ac.uk/display/HGI/Genestack+Uploader+App">Confluence Documentation</a>
+          <div className="text-center">
+            The blue help button at the top of pages will give you information
+            about the page.
+          </div>
+          <a href="https://confluence.sanger.ac.uk/display/HGI/Genestack+Uploader+App">
+            Confluence Documentation
+          </a>
           <code>
             Software Version: {softwareVersion} | Package Version:{" "}
             {packageVersion} | Server: {genestackServer}

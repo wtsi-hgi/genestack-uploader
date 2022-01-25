@@ -78,7 +78,7 @@ const NewStudy = () => {
         fields.reduce((xs, x) => ({ ...xs, [x.name]: "" }), {
           addedColumns: [],
           renamedColumns: [],
-          deletedColumns: []
+          deletedColumns: [],
         })
       );
       setTemplateFields(fields);
@@ -204,10 +204,7 @@ const NewStudy = () => {
             <label>Add Columns</label>
             <br />
             {newStudy.addedColumns.map((val, idx) => (
-              <div
-                className="form-control"
-                key={`adding-${idx}-${val.title}`}
-              >
+              <div className="form-control" key={`adding-${idx}-${val.title}`}>
                 <input
                   type="text"
                   defaultValue={val.title}
@@ -215,7 +212,7 @@ const NewStudy = () => {
                   onBlur={(e) => {
                     let tmp_added = newStudy.addedColumns;
                     tmp_added[idx].title = e.target.value;
-                    setNewStudy({...newStudy, addedColumns: tmp_added});
+                    setNewStudy({ ...newStudy, addedColumns: tmp_added });
                   }}
                 />
                 <input
@@ -225,7 +222,7 @@ const NewStudy = () => {
                   onBlur={(e) => {
                     let tmp_added = newStudy.addedColumns;
                     tmp_added[idx].value = e.target.value;
-                    setNewStudy({ ...newStudy, addedColumns: tmp_added})
+                    setNewStudy({ ...newStudy, addedColumns: tmp_added });
                   }}
                 />
                 <button
@@ -234,11 +231,11 @@ const NewStudy = () => {
                   onClick={() => {
                     let tmp = newStudy.addedColumns;
                     tmp.splice(idx, 1);
-                    setNewStudy({...newStudy, addedColumns: tmp})
+                    setNewStudy({ ...newStudy, addedColumns: tmp });
                   }}
-                  >
-                    <Trash />
-                  </button>
+                >
+                  <Trash />
+                </button>
               </div>
             ))}
             <button
@@ -318,10 +315,7 @@ const NewStudy = () => {
             <label>Delete Columns</label>
             <br />
             {newStudy.deletedColumns.map((val, idx) => (
-              <div
-                className="form-control"
-                key={`deleting-${idx}-${val}`}
-              >
+              <div className="form-control" key={`deleting-${idx}-${val}`}>
                 <input
                   type="text"
                   defaultValue={val}
@@ -329,7 +323,7 @@ const NewStudy = () => {
                   onBlur={(e) => {
                     let tmp_deletes = newStudy.deletedColumns;
                     tmp_deletes[idx] = e.target.value;
-                    setNewStudy({...newStudy, deletedColumns: tmp_deletes})
+                    setNewStudy({ ...newStudy, deletedColumns: tmp_deletes });
                   }}
                 />
                 <button
@@ -338,7 +332,7 @@ const NewStudy = () => {
                   onClick={() => {
                     let tmp = newStudy.deletedColumns;
                     tmp.splice(idx, 1);
-                    setNewStudy({...newStudy, deletedColumns: tmp})
+                    setNewStudy({ ...newStudy, deletedColumns: tmp });
                   }}
                 >
                   <Trash />
@@ -351,7 +345,7 @@ const NewStudy = () => {
               onClick={() => {
                 setNewStudy({
                   ...newStudy,
-                  deletedColumns: [...newStudy.deletedColumns, ""]
+                  deletedColumns: [...newStudy.deletedColumns, ""],
                 });
               }}
             >
