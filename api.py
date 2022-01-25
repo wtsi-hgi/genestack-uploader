@@ -282,6 +282,11 @@ def all_studies() -> Response:
             logger.exception(err)
             return create_response({"error": f"missing key: {err}"}, 400)
 
+        except uploadtogenestack.genestackassist.WrongFieldRenaming as err:
+            logger.error("renaming columns user error")
+            logger.exception(err)
+            return bad_request_error(err)
+
         except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
             logger.error("request forbidden")
             logger.exception(err)
