@@ -24,7 +24,7 @@ import { apiRequest, keyCheck, postApiReqiest } from "../../utils/api";
 import styles from "../../styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { HelpModal } from "../../utils/HelpModal";
-import { ArrowLeftCircle, Trash } from "react-bootstrap-icons";
+import { ArrowLeftCircle, Trash, QuestionCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { studiesIndexHelpText } from "../../utils/helpText";
 import Head from "next/head";
@@ -41,6 +41,7 @@ const NewStudy = () => {
   const [createdStudyAccession, setCreatedStudyAccesion] = useState("");
 
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showColNamesModal, setShowColNamesModal] = useState(false);
 
   useEffect(() => {
     keyCheck();
@@ -150,6 +151,17 @@ const NewStudy = () => {
       </button>
       <br />
 
+      <HelpModal
+        header="Sample File Column Names"
+        helpText="It is required that you have the column `Sample Source ID` with
+        unique values and no blanks, and the column `Sample Source` in
+        your sample file."
+        show={showColNamesModal}
+        handleClose={() => {
+          setShowColNamesModal(false);
+        }}
+      />
+
       <form>
         <div className="form-group">
           <label htmlFor="select-template">Select a Template</label>
@@ -201,6 +213,15 @@ const NewStudy = () => {
         ))}
         {templateFields.length != 0 && (
           <div>
+            <h5 className="d-inline">Sample File Column Names</h5>
+            <QuestionCircle
+              className="mb-2"
+              role="button"
+              onClick={() => {
+                setShowColNamesModal(true);
+              }}
+            />
+            <br />
             <label>Add Columns</label>
             <br />
             {newStudy.addedColumns.map((val, idx) => (
