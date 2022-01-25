@@ -33,7 +33,7 @@ import uploadtogenestack
 from uploader import exceptions, job_responses, s3
 from uploader.job_responses import JobResponse
 
-def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any]) -> JobResponse:
+def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any], _) -> JobResponse:
     # Here we going to be creating a new study
     # The information we need will be stored in the response body
     # This should be JSON, and should actually exist

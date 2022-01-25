@@ -43,9 +43,22 @@ def study_created(accession: str) -> JobResponse:
         "accession": accession
     }
 
+def signal_created(study_accession: str) -> JobResponse:
+    return JobStatus.Completed, {
+        "signal": "created",
+        "study_accession": study_accession
+    }
+
 def other_error(err: Exception) -> JobResponse:
     return JobStatus.Failed, {
         "error": "error",
+        "name": err.__class__.__name__,
+        "detail": err.args
+    }
+
+def not_found(err: Exception) -> JobResponse:
+    return JobStatus.Failed, {
+        "error": "not found",
         "name": err.__class__.__name__,
         "detail": err.args
     }

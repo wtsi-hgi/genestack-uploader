@@ -28,6 +28,7 @@ import multiprocessing
 import typing as T
 import uuid
 from uploader.common import JobStatus
+from uploader.signal import new_signal
 
 from uploader.study import new_study
 
@@ -49,7 +50,7 @@ class JobNotFinishedError(Exception):
     to get info from it assuming it's finished"""
 class JobType(enum.Enum):
     Study = new_study
-    Signal = ...
+    Signal = new_signal
 
 class GenestackUploadJob:
     """a representaion of an uploading job"""
@@ -60,7 +61,7 @@ class GenestackUploadJob:
     def add_env(cls, key: str, val: T.Any) -> None:
         cls.env[key] = val
 
-    def __init__(self, job_type: JobType, token: str, body: T.Dict[str, T.Any]) -> None:
+    def __init__(self, job_type: JobType, token: str, body: T.Dict[str, T.Any], study_id: str = None) -> None:
         self._status: JobStatus = JobStatus.Queued
         self._start_time: T.Optional[datetime.datetime] = None
         self._end_time: T.Optional[datetime.datetime] = None
@@ -69,6 +70,7 @@ class GenestackUploadJob:
         self._job_type = job_type
         self._token = token
         self._body = body
+        self._study_id = study_id
 
         self._uuid = uuid.uuid4()
 
@@ -86,7 +88,7 @@ class GenestackUploadJob:
         self._start_time = datetime.datetime.now()
         self._write_to_file()
 
-        finish_status, output = self._job_type(self._token, self._body, self.logger, self.__class__.env) # type: ignore
+        finish_status, output = self._job_type(self._token, self._body, self.logger, self.__class__.env, self._study_id) # type: ignore
         self.finish(finish_status, output)
 
     def finish(self, state: JobStatus, output: T.Any) -> None:
@@ -105,7 +107,7 @@ class GenestackUploadJob:
 
     @status.setter
     def status(self, status: JobStatus) -> None:
-        if isinstance(status, JobStatus):
+        if isinstance(status, JobStatus): # type: ignore
             if self.status == JobStatus.Queued and status != JobStatus.Running:
                 raise InvalidJobStatusProgressionError
 
@@ -165,7 +167,7 @@ class GenestackUploadJob:
         with open(f".jobs/{self._uuid}") as f:
             return json.loads(f.read())
 
-def job_handler(jobs_queue) -> None:
+def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:
     while True:
         job = jobs_queue.get(block=True)
         job.start()
