@@ -25,6 +25,7 @@ import csv
 import importlib.metadata
 from json.decoder import JSONDecodeError
 import logging
+import multiprocessing
 import os
 from pathlib import Path
 import pathlib
@@ -40,6 +41,7 @@ import uploadtogenestack
 from api_utils import *  # pylint: disable=wildcard-import
 import config
 import s3
+import uploader
 
 # first up, we need to grab the genestack configuration
 # this is typically in ~/.genestack.cfg
@@ -69,6 +71,14 @@ api_blueprint = flask.Blueprint("api", "api")
 logger: logging.Logger = logging.getLogger("API")
 logger.setLevel(config.LOG_LEVEL)
 
+all_jobs: T.Dict[str, uploader.GenestackUploadJob] = {}
+jobs_queue: "multiprocessing.Queue[uploader.GenestackUploadJob]" = multiprocessing.Queue()
+
+_jobs_process: multiprocessing.Process = multiprocessing.Process(
+    target=uploader.job_handler,
+    args=(jobs_queue,)
+)
+_jobs_process.start()
 
 @api_blueprint.app_errorhandler(404)
 def _():

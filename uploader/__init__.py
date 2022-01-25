@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import datetime
 import enum
+import multiprocessing
 import typing as T
 
 class InvalidJobStatusProgressionError(Exception):
@@ -72,6 +73,7 @@ class GenestackUploadJob:
     def finish(self, state: JobStatus, output: T.Any) -> None:
         self.status = state
         self._output = output
+        self._end_time = datetime.datetime.now()
 
     @property
     def status(self) -> JobStatus:
@@ -113,3 +115,8 @@ class GenestackUploadJob:
             return self._output
 
         raise JobNotFinishedError
+
+def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:
+    while True:
+        job: GenestackUploadJob = jobs_queue.get(block=True)
+        job.start()
