@@ -21,11 +21,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+from multiprocessing import freeze_support
 import flask
 from flask_swagger_ui import get_swaggerui_blueprint
 import waitress
-
-from api import api_blueprint
+from api import api_blueprint, start_multiproc
 import config
 
 # We're going to make our Flask app, using the root as the path to static files
@@ -101,4 +101,6 @@ def production():
 
 
 if __name__ == "__main__":
+    freeze_support()
+    start_multiproc()
     app.run()

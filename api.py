@@ -31,6 +31,7 @@ from pathlib import Path
 import pathlib
 import time
 import typing as T
+import uuid
 
 import botocore
 import flask
@@ -40,7 +41,7 @@ import uploadtogenestack
 
 from api_utils import *  # pylint: disable=wildcard-import
 import config
-import s3
+import uploader.s3 as s3
 import uploader
 
 # first up, we need to grab the genestack configuration
@@ -66,19 +67,25 @@ except (
     raise PermissionError(
         "you must set a public S3 policy to start the app") from start_s3_err
 
+uploader.GenestackUploadJob.add_env("s3_bucket", s3_bucket)
+uploader.GenestackUploadJob.add_env("gs_config", gs_config)
+uploader.GenestackUploadJob.add_env("gs_server", config.GENESTACK_SERVER)
+uploader.GenestackUploadJob.add_env("ssh_key_path", ssh_key_path)
+
 api_blueprint = flask.Blueprint("api", "api")
 
 logger: logging.Logger = logging.getLogger("API")
 logger.setLevel(config.LOG_LEVEL)
 
-all_jobs: T.Dict[str, uploader.GenestackUploadJob] = {}
+all_jobs: T.Dict[uuid.UUID, uploader.GenestackUploadJob] = {}
 jobs_queue: "multiprocessing.Queue[uploader.GenestackUploadJob]" = multiprocessing.Queue()
 
-_jobs_process: multiprocessing.Process = multiprocessing.Process(
-    target=uploader.job_handler,
-    args=(jobs_queue,)
-)
-_jobs_process.start()
+def start_multiproc():
+    _jobs_process: multiprocessing.Process = multiprocessing.Process(
+        target=uploader.job_handler,
+        args=(jobs_queue,)
+    )
+    _jobs_process.start()
 
 @api_blueprint.app_errorhandler(404)
 def _():
@@ -121,210 +128,11 @@ def all_studies() -> Response:
     # POST Handler #
     # ************ #
     if flask.request.method == "POST":
-
-        # Here we going to be creating a new study
-        # The information we need will be stored in the response body
-        # This should be JSON, and should actually exist
-        body: T.Dict[str, T.Any] = flask.request.json
-        if body is None:
-            logger.error("invalid body")
-            return INVALID_BODY
-
-        logger.info("starting an upload")
-
-        try:
-            # If we aren't given a specific Study Title, we're going to
-            # use the Study Source as a placeholder
-            if "Study Title" not in body or body["Study Title"] == "":
-                body["Study Title"] = body["Study Source"]
-
-            sample_file: T.Optional[Path] = None
-
-            with s3.S3PublicPolicy(s3_bucket):
-                if body.get("Sample File"):
-                    # We need to download the sample file from the S3 bucket and
-                    # store it locally so it can get uploaded.
-                    # Once it has been uploaded, we don't care about it anymore,
-                    # so we'll just store it in /tmp
-                    sample_file = f"/tmp/samples_{int(time.time()*1000)}.tsv"
-
-                    # Getting Data from S3
-                    logger.info(
-                        f"downloading sample file from S3 ({body['Sample File']}) to {sample_file}")
-                    s3_bucket.download_file(body["Sample File"].strip().replace(
-                        f"s3://{gs_config['genestackbucket']}/", ""), sample_file)
-
-                    # Reanming Sample File Columns
-
-                    # The user has the oppurtunity to rename columns in the sample file,
-                    # or create new columns in the sample file before it gets uploaded.
-                    # We get passed {old: ..., new: ..., colValue: ...} objects giving us
-                    # the column name to rename, the new column name and the value that should
-                    # be in the column. Leaving colValue blank shows we want to use the values
-                    # that are already in that column (which can be different in every row).
-                    # Filling in colValue means we want the same value in each cell, which
-                    # can be used when making new columns. This involves leaving `old` as
-                    # an empty string
-
-                    # The other important thing is that is a column isn't included, it'll be
-                    # deleted. We don't give the user the option to delete columns, so we need
-                    # to ensure that ALL current columns are also included. For this, we read
-                    # the headers of the sample file, and add those records in, keeping old and
-                    # new the same, and leaving colValue blank, so it uses the already existing
-                    # values.
-
-                    # Then we open a file to write this all to, how the uploadtogenestack package
-                    # expects it to be. This is a `|` separated file, with a header row:
-                    # old|new|fillvalue
-                    # where fillvalue is what we've called colValue up to now
-                    # Then we can pass the samples file, this new temp file to the package, and
-                    # get back the path of a new samples file, which we'll use later on.
-
-                    # all this is under the assumption that we're going to rename anything,
-                    # hence `if len(body["renamedColumns"]) != 0:`
-                    if len(body["renamedColumns"]) + len(body["addedColumns"]) + len(body["deletedColumns"]) != 0:
-                        logger.info("we have some columns to change")
-                        logger.info(f"Change: {body['renamedColumns']}")
-                        logger.info(f"Insert: {body['addedColumns']}")
-                        logger.info(f"Delete: {body['deletedColumns']}")
-
-                        with open(sample_file, encoding="UTF-8") as samples:
-                            reader = csv.reader(samples, delimiter="\t")
-                            headers = next(reader)
-
-                        # Everything's going to go into the renamedColumns dict
-                        # First, we need to add [fillvalue] to the values as the file requires
-                        for col in body["renamedColumns"]:
-                            col["colValue"] = "[fillvalue]"
-
-                        # We'll now go through the columns left in the samples file, and add them if they're not to be deleted
-                        for header in headers:
-                            if header not in [x["old"].strip() for x in body["renamedColumns"]] and header not in [x.strip() for x in body["deletedColumns"]]:
-                                body["renamedColumns"].append({
-                                    "old": header,
-                                    "new": header,
-                                    "colValue": "[fillvalue]"
-                                })
-
-                        # We'll now add the columns that are getting added
-                        for col in body["addedColumns"]:
-                            body["renamedColumns"].append({
-                                "old": "",
-                                "new": col["title"],
-                                "colValue": col["value"]
-                            })
-
-                        tmp_rename_fp: str = f"/tmp/gs-rename-{int(time.time()*1000)}.tsv"
-                        logger.info(
-                            f"we're going to write the rename information to {tmp_rename_fp}")
-
-                        # We can now open the file, and write all that information to it
-                        with open(tmp_rename_fp, "w", encoding="UTF-8") as tmp_rename:
-                            tmp_rename.write("old|new|fillvalue\n")
-                            for col_rename in body["renamedColumns"]:
-                                tmp_rename.write(
-                                    "|".join([
-                                        col_rename["old"].strip(),
-                                        col_rename["new"].strip(),
-                                        col_rename["colValue"].strip()
-                                    ]) + "\n")
-
-                        if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
-                            tmp_rename_fp,
-                            sample_file
-                        ):
-                            logger.info(
-                                "the rename file was fine, now we'll modify the sample file")
-                            sample_file = pathlib.Path(
-                                uploadtogenestack.GenestackUploadUtils.renamesamplefilecolumns(
-                                    sample_file,
-                                    tmp_rename_fp
-                                )
-                            )
-
-                        else:
-                            logger.error("failed to validate the sample file")
-                            return bad_request_error(FailedToVerifyColumnRenamingError())
-
-                    else:
-                        logger.info("no columns to rename")
-
-                # Although these are passed to us in our API,
-                # it would be invalid in what we pass to genestack, so we
-                # need rid of it now we've downloaded the file from S3
-                del body["Sample File"]
-                del body["renamedColumns"]
-                del body["addedColumns"]
-                del body["deletedColumns"]
-
-                # Creating Metadata TSV
-
-                # Genestack needs us to give it the metadata in a TSV file, which has
-                # two rows, the top row being the metadata keys, and the second row being
-                # the metadata values.
-
-                # We can then create a new `GenestackStudy` to upload everything to Genestack
-                tmp_fp: str = f"/tmp/genestack-{int(time.time()*1000)}.tsv"
-                logging.info(f"using {tmp_fp} as the metadata file")
-
-                with open(tmp_fp, "w", encoding="UTF-8") as tmp_tsv:
-                    logger.info("writing to metadata file")
-                    body = OrderedDict(body)
-                    tmp_tsv.write("\t".join(x.strip()
-                                  for x in body.keys()) + "\n")
-                    tmp_tsv.write("\t".join(x.strip()
-                                  for x in body.values()) + "\n")
-
-                logger.info("creating study")
-                study = uploadtogenestack.GenestackStudy(
-                    samplefile=sample_file,
-                    genestackserver=config.GENESTACK_SERVER,
-                    genestacktoken=token,
-                    studymetadata=tmp_fp,
-                    ssh_key_filepath=ssh_key_path
-                )
-
-            logger.info(f"study created all good: {study.study_accession}")
-            return create_response({"accession": study.study_accession}, 201)
-
-        except KeyError as err:
-            logger.error("missing key")
-            logger.exception(err)
-            return create_response({"error": f"missing key: {err}"}, 400)
-
-        except uploadtogenestack.genestackassist.WrongFieldRenaming as err:
-            logger.error("renaming columns user error")
-            logger.exception(err)
-            return bad_request_error(err)
-
-        except (PermissionError, uploadtogenestack.genestackETL.AuthenticationFailed) as err:
-            logger.error("request forbidden")
-            logger.exception(err)
-            return FORBIDDEN
-
-        except FileNotFoundError as err:
-            logger.error("File Not Found")
-            logger.exception(err)
-            return bad_request_error(err)
-
-        except (
-            botocore.exceptions.ClientError,
-            uploadtogenestack.genestackassist.BucketPermissionDenied
-        ) as err:
-            logger.error("S3 Bucket Permission Denied")
-            logger.exception(err)
-            return S3_PERMISSION_DENIED
-
-        except EOFError as err:
-            # package asks for confirmation, user can't give it
-            logger.error("uploadtogenestack package can't read stdin")
-            logger.exception(err)
-            return FILE_IN_BUCKET
-
-        except Exception as err:
-            logger.error("Error")
-            logger.exception(err)
-            return internal_server_error(err)
+        _job = uploader.GenestackUploadJob(uploader.JobType.Study, token, flask.request.json)
+        jobs_queue.put(_job)
+        all_jobs[_job.uuid] = _job
+        
+        return {"jobId": _job.uuid}, 202
 
     # *********** #
     # GET Handler #
@@ -714,3 +522,12 @@ def get_template_types():
         logger.error("Error")
         logger.exception(err)
         return internal_server_error(err)
+
+@api_blueprint.route("/jobs/<job_uuid>", methods=["GET"])
+def get_job(job_uuid: str):
+    print(all_jobs)
+    try:
+        _job = all_jobs[uuid.UUID(job_uuid)]
+        return _job.json
+    except KeyError as err:
+        return not_found(err)

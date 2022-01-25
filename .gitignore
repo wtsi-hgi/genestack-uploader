@@ -11,3 +11,5 @@ uploadinfo.json
 .DS_Store
 
 *.gct
+
+.jobs
