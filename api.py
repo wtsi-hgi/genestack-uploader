@@ -421,7 +421,7 @@ def get_template_types():
 @api_blueprint.route("/jobs/<job_uuid>", methods=["GET"])
 def get_job(job_uuid: str):
     global all_jobs
-    all_jobs = {k:v for k, v in all_jobs.items() if not v.expired}
+    all_jobs = {k: v for k, v in all_jobs.items() if not v.expired}
     try:
         _job = all_jobs[uuid.UUID(job_uuid)]
         return _job.json

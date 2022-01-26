@@ -50,6 +50,7 @@ try:
 except ValueError as err:
     raise ValueError("JOB_EXPIRY_HOURS env variable must be integer") from err
 
+
 class InvalidJobStatusProgressionError(Exception):
     """raised when the update to a job status is invalid
     queued jobs must be set to running
@@ -79,12 +80,14 @@ class JobType(enum.Enum):
     Study = new_study  # pylint: disable=invalid-name
     Signal = new_signal  # pylint: disable=invalid-name
 
+
 _str_to_status: T.Dict[str, JobStatus] = {
     "QUEUED": JobStatus.Queued,
     "RUNNING": JobStatus.Running,
     "COMPLETED": JobStatus.Completed,
     "FAILED": JobStatus.Failed
 }
+
 
 class GenestackUploadJob:
     """a representaion of an uploading job"""
@@ -270,7 +273,7 @@ class GenestackUploadJob:
         the job finished more than a week ago.
         if so, return True and delete the job
         file
-        
+
         Returns:
             bool: did the job finish more than a week ago
         """
@@ -281,7 +284,7 @@ class GenestackUploadJob:
             if datetime.datetime.now() - self.end_time > datetime.timedelta(hours=JOB_EXPIRY_HOURS):
                 os.remove(f".jobs/{self._uuid}")
                 return True
-        
+
         return False
 
 

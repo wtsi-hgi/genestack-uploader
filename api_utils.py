@@ -98,6 +98,7 @@ class TemplateNotFoundError(Exception):
 class StudyNotFoundError(Exception):
     """When a study isn't found"""
 
+
 class JobIDNotFound(KeyError):
     """when a job ID isn't found.
     this could be because it expired"""

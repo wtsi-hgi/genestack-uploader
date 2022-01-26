@@ -23,10 +23,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import enum
 import typing as T
 
+
 class JobStatus(enum.Enum):
     Queued = "QUEUED"
     Running = "RUNNING"
     Completed = "COMPLETED"
     Failed = "FAILED"
+
 
 FINISHED_STATUSES: T.Set[JobStatus] = {JobStatus.Failed, JobStatus.Completed}

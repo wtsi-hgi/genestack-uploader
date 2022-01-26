@@ -146,8 +146,8 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
 
     finally:
         try:
-            os.remove(tmp_fp) # type: ignore
-            os.remove(body["data"]) # type: ignore
-            shutil.rmtree(study.local_dir) # type: ignore
+            os.remove(tmp_fp)  # type: ignore
+            os.remove(body["data"])  # type: ignore
+            shutil.rmtree(study.local_dir)  # type: ignore
         except (FileNotFoundError, UnboundLocalError):
             pass
