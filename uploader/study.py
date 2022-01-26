@@ -53,6 +53,8 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
         sample_file: T.Optional[Path] = None
         s3_bucket = env["s3_bucket"]
 
+        template: str = body["template"]
+
         with s3.S3PublicPolicy(s3_bucket):
             if body.get("Sample File"):
                 # We need to download the sample file from the S3 bucket and
@@ -172,6 +174,7 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
             del body["renamedColumns"]
             del body["addedColumns"]
             del body["deletedColumns"]
+            del body["template"]
 
             # Creating Metadata TSV
 
@@ -197,7 +200,8 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                 genestackserver=env["gs_server"],
                 genestacktoken=token,
                 studymetadata=tmp_fp,
-                ssh_key_filepath=env["ssh_key_path"]
+                ssh_key_filepath=env["ssh_key_path"],
+                genestack_template=template
             )
 
         logger.info(f"study created all good: {study.study_accession}")

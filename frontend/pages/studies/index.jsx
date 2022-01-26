@@ -79,6 +79,7 @@ const NewStudy = () => {
           addedColumns: [],
           renamedColumns: [],
           deletedColumns: [],
+          template: selectedTemplate
         })
       );
       setTemplateFields(fields);
