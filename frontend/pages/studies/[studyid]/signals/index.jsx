@@ -336,7 +336,7 @@ const NewSignal = () => {
         )}
       </form>
       <br />
-      {jobID && (<JobStatus jobID={jobID} />)}
+      {jobID && <JobStatus jobID={jobID} />}
     </div>
   );
 };

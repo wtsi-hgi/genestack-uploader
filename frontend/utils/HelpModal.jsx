@@ -22,7 +22,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Modal } from "react-bootstrap";
 
-export const HelpModal = ({ header, helpText, handleClose, show, code=null }) => {
+export const HelpModal = ({
+  header,
+  helpText,
+  handleClose,
+  show,
+  code = null,
+}) => {
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header>
@@ -31,7 +37,7 @@ export const HelpModal = ({ header, helpText, handleClose, show, code=null }) =>
       <Modal.Body>
         {helpText}
         <br />
-        {code && (<code>{code}</code>)}
+        {code && <code>{code}</code>}
         <hr />
         <a href="https://confluence.sanger.ac.uk/display/HGI/Genestack+Uploader+App">
           More on Confluence

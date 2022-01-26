@@ -37,7 +37,7 @@ const NewStudy = () => {
 
   const [newStudy, setNewStudy] = useState(Object);
 
-  const [jobID, setJobID] = useState("")
+  const [jobID, setJobID] = useState("");
 
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showColNamesModal, setShowColNamesModal] = useState(false);
@@ -79,7 +79,7 @@ const NewStudy = () => {
           addedColumns: [],
           renamedColumns: [],
           deletedColumns: [],
-          template: selectedTemplate
+          template: selectedTemplate,
         })
       );
       setTemplateFields(fields);
@@ -106,7 +106,7 @@ const NewStudy = () => {
     // and update the UI if the job status changes
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
     let jobID = JSON.parse(req_info).jobId;
-    setJobID(jobID)
+    setJobID(jobID);
   };
 
   return (
@@ -376,7 +376,7 @@ const NewStudy = () => {
         )}
       </form>
       <br />
-      {jobID && (<JobStatus jobID={jobID} />)}
+      {jobID && <JobStatus jobID={jobID} />}
     </div>
   );
 };

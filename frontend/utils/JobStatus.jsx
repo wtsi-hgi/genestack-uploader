@@ -20,89 +20,85 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import { QuestionCircle } from "react-bootstrap-icons";
 import { apiRequest } from "./api";
 import { HelpModal } from "./HelpModal";
 
 export const JobStatus = ({ jobID }) => {
+  const [successfulRequest, setSuccessfulRequest] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [studyAccession, setStudyAccession] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
-    const [successfulRequest, setSuccessfulRequest] = useState("");
-    const [apiError, setApiError] = useState("");
-    const [studyAccession, setStudyAccession] = useState("");
-    const [showModal, setShowModal] = useState(false);
+  const updateJobState = (jobID, refreshID) => {
+    apiRequest(`jobs/${jobID}`).then((t) => {
+      setSuccessfulRequest(t.status);
 
-    const updateJobState = (jobID, refreshID) => {
-        apiRequest(`jobs/${jobID}`).then((t) => {
-          setSuccessfulRequest(t.status);
-    
-          if (t.status === "FAILED") {
-            setApiError(JSON.stringify(t.output));
-            clearInterval(refreshID);
-          } else if (t.status === "COMPLETED") {
-            setStudyAccession(t.output.studyAccession);
-            clearInterval(refreshID);
-          }
-        })
+      if (t.status === "FAILED") {
+        setApiError(JSON.stringify(t.output));
+        clearInterval(refreshID);
+      } else if (t.status === "COMPLETED") {
+        setStudyAccession(t.output.studyAccession);
+        clearInterval(refreshID);
       }
+    });
+  };
 
-    useEffect(() => {
-        setApiError("")
-        setStudyAccession("")
-        updateJobState(jobID, null)
-        let refreshID = setInterval(() => {
-        updateJobState(jobID, refreshID)
-        }, 20000)
-    }, [jobID])
+  useEffect(() => {
+    setApiError("");
+    setStudyAccession("");
+    updateJobState(jobID, null);
+    let refreshID = setInterval(() => {
+      updateJobState(jobID, refreshID);
+    }, 20000);
+  }, [jobID]);
 
-    return (
-        <div>
-            <HelpModal
-                header="Jobs"
-                helpText={`You have submitted an upload job 
+  return (
+    <div>
+      <HelpModal
+        header="Jobs"
+        helpText={`You have submitted an upload job 
                 which has been given this ID. You can send 
                 a request to this endpoint
                 to get information about the state of the job.`}
-                code={`${process.env.NEXT_PUBLIC_HOST}/api/jobs/${jobID}`}
-                show={showModal}
-                handleClose={() => {
-                    setShowModal(false);
-                }}
-            />
-
-            <b>Job ID:</b> {jobID} <QuestionCircle role="button" onClick={() => {setShowModal(true)}} />
-            {
-                successfulRequest == "QUEUED" && (
-                    <div className="alert alert-warning">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                        </div>
-                        Queued
-                    </div>
-                )
-            }
-            {
-                successfulRequest == "RUNNING" && (
-                    <div className="alert alert-primary">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                        </div>
-                        Running
-                    </div>
-                )
-            }
-            {successfulRequest == "COMPLETED" && (
-                <div className="alert alert-success">Completed</div>
-            )}
-            {successfulRequest == "FAILED" && (
-                <div className="alert alert-danger">Failed</div>
-            )}
-            {apiError != "" && <code>{apiError}</code>}
-            {studyAccession != "" && (
-                <a
-                    href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyAccession}`}
-                >
-                    Go to Study
-                </a>
-            )}
+        code={`${process.env.NEXT_PUBLIC_HOST}/api/jobs/${jobID}`}
+        show={showModal}
+        handleClose={() => {
+          setShowModal(false);
+        }}
+      />
+      <b>Job ID:</b> {jobID}{" "}
+      <QuestionCircle
+        role="button"
+        onClick={() => {
+          setShowModal(true);
+        }}
+      />
+      {successfulRequest == "QUEUED" && (
+        <div className="alert alert-warning">
+          <div className="spinner-border spinner-border-sm" role="status"></div>
+          Queued
         </div>
-    )
-}
+      )}
+      {successfulRequest == "RUNNING" && (
+        <div className="alert alert-primary">
+          <div className="spinner-border spinner-border-sm" role="status"></div>
+          Running
+        </div>
+      )}
+      {successfulRequest == "COMPLETED" && (
+        <div className="alert alert-success">Completed</div>
+      )}
+      {successfulRequest == "FAILED" && (
+        <div className="alert alert-danger">Failed</div>
+      )}
+      {apiError != "" && <code>{apiError}</code>}
+      {studyAccession != "" && (
+        <a href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyAccession}`}>
+          Go to Study
+        </a>
+      )}
+    </div>
+  );
+};
