@@ -22,6 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
 import logging
+import os
+import shutil
 import typing as T
 import time
 
@@ -100,7 +102,7 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
             # be able to modify the study - in our case we want to add a signal_dict
             logger.info(f"adding signal for study {study_id.strip()}")
 
-            uploadtogenestack.GenestackStudy(
+            study = uploadtogenestack.GenestackStudy(
                 study_genestackaccession=study_id.strip(),
                 genestackserver=env["gs_server"],
                 genestacktoken=token,
@@ -141,3 +143,11 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
         logger.error("Error")
         logger.exception(err)
         return job_responses.other_error(err)
+
+    finally:
+        try:
+            os.remove(tmp_fp) # type: ignore
+            os.remove(body["data"]) # type: ignore
+            shutil.rmtree(study.local_dir) # type: ignore
+        except FileNotFoundError:
+            pass

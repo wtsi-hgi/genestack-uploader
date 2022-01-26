@@ -23,7 +23,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from collections import OrderedDict
 import csv
 import logging
+import os
 from pathlib import Path
+import shutil
 import time
 import typing as T
 
@@ -239,3 +241,12 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
         logger.error("Error")
         logger.exception(err)
         return job_responses.other_error(err)
+
+    finally:
+        try:
+            os.remove(sample_file) # type: ignore
+            os.remove(tmp_rename_fp) # type: ignore
+            os.remove(tmp_fp) # type: ignore
+            shutil.rmtree(study.local_dir) # type: ignore
+        except FileNotFoundError:
+            pass
