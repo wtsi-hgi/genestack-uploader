@@ -33,6 +33,22 @@ from uploader.signal import new_signal
 
 from uploader.study import new_study
 
+LogLevel = T.Union[str, int]
+
+_str_to_log: T.Dict[str, LogLevel] = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
+
+LOG_LEVEL: LogLevel = _str_to_log[os.getenv("LOG_LEVEL", default="INFO")]
+
+try:
+    JOB_EXPIRY_HOURS: int = int(os.getenv("JOB_EXPIRY_HOURS", default="168"))
+except ValueError as err:
+    raise ValueError("JOB_EXPIRY_HOURS env variable must be integer") from err
 
 class InvalidJobStatusProgressionError(Exception):
     """raised when the update to a job status is invalid
@@ -118,8 +134,9 @@ class GenestackUploadJob:
         # loggers defined here, so in same process as
         # where the logging will happen
         self.logger = logging.getLogger(str(self.uuid))
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(LOG_LEVEL)
         self.logger.info("starting job")
+
         if self.status != JobStatus.Queued:
             raise JobAlreadyStartedError
 
@@ -261,7 +278,7 @@ class GenestackUploadJob:
         self._status = _str_to_status[data["status"]]
         if self.status in FINISHED_STATUSES:
             self._end_time = datetime.datetime.fromisoformat(data["endTime"])
-            if datetime.datetime.now() - self.end_time > datetime.timedelta(weeks=1):
+            if datetime.datetime.now() - self.end_time > datetime.timedelta(hours=JOB_EXPIRY_HOURS):
                 os.remove(f".jobs/{self._uuid}")
                 return True
         
