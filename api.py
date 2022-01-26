@@ -211,7 +211,7 @@ def all_signals(study_id: str) -> Response:
         logger.info("POST request: let's make a new signal dataset")
 
         _job = uploader.GenestackUploadJob(
-            uploader.JobType.Signal, token, flask.request.json)
+            uploader.JobType.Signal, token, flask.request.json, study_id)
         jobs_queue.put(_job)
         all_jobs[_job.uuid] = _job
 

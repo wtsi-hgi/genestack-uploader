@@ -231,12 +231,6 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
         logger.exception(err)
         return job_responses.S3_PERMISSION_DENIED
 
-    except EOFError as err:
-        # package asks for confirmation, user can't give it
-        logger.error("uploadtogenestack package can't read stdin")
-        logger.exception(err)
-        return job_responses.FILE_IN_BUCKET
-
     except Exception as err:
         logger.error("Error")
         logger.exception(err)

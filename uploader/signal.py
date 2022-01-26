@@ -24,6 +24,8 @@ from collections import OrderedDict
 import logging
 import typing as T
 import time
+
+import botocore
 from uploader import job_responses, s3
 
 from uploader.job_responses import JobResponse
@@ -134,12 +136,6 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
         logger.error("S3 Bucket Permission Denied")
         logger.exception(err)
         return job_responses.S3_PERMISSION_DENIED
-
-    except EOFError as err:
-        # package asks for confirmation, user can't give it
-        logger.error("can't read stdin")
-        logger.exception(err)
-        return job_responses.FILE_IN_BUCKET
 
     except Exception as err:
         logger.error("Error")

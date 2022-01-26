@@ -29,7 +29,7 @@ export const JobStatus = ({ jobID }) => {
 
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
-    const [createdStudyAccession, setCreatedStudyAccession] = useState("");
+    const [studyAccession, setStudyAccession] = useState("");
     const [showModal, setShowModal] = useState(false);
 
     const updateJobState = (jobID, refreshID) => {
@@ -40,18 +40,20 @@ export const JobStatus = ({ jobID }) => {
             setApiError(JSON.stringify(t.output));
             clearInterval(refreshID);
           } else if (t.status === "COMPLETED") {
-            setCreatedStudyAccession(t.output.accession);
+            setStudyAccession(t.output.studyAccession);
             clearInterval(refreshID);
           }
         })
       }
 
     useEffect(() => {
+        setApiError("")
+        setStudyAccession("")
         updateJobState(jobID, null)
         let refreshID = setInterval(() => {
         updateJobState(jobID, refreshID)
         }, 20000)
-    }, [])
+    }, [jobID])
 
     return (
         <div>
@@ -94,11 +96,11 @@ export const JobStatus = ({ jobID }) => {
                 <div className="alert alert-danger">Failed</div>
             )}
             {apiError != "" && <code>{apiError}</code>}
-            {createdStudyAccession != "" && (
+            {studyAccession != "" && (
                 <a
-                    href={`${process.env.NEXT_PUBLIC_HOST}/studies/${createdStudyAccession}`}
+                    href={`${process.env.NEXT_PUBLIC_HOST}/studies/${studyAccession}`}
                 >
-                    Go to New Study
+                    Go to Study
                 </a>
             )}
         </div>

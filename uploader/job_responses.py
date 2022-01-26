@@ -30,8 +30,6 @@ INVALID_BODY: JobResponse = JobStatus.Failed, {"error": "no valid json body"}
 FORBIDDEN: JobResponse = JobStatus.Failed, {"error": "forbidden"}
 S3_PERMISSION_DENIED: JobResponse = JobStatus.Failed, {
     "error": "S3 bucket permission denied"}
-FILE_IN_BUCKET: JobResponse = JobStatus.Failed, {
-    "error": "file already in bucket"}
 
 
 def bad_request_error(err: Exception) -> JobResponse:
@@ -44,14 +42,14 @@ def bad_request_error(err: Exception) -> JobResponse:
 
 def study_created(accession: str) -> JobResponse:
     return JobStatus.Completed, {
-        "accession": accession
+        "studyAccession": accession
     }
 
 
 def signal_created(study_accession: str) -> JobResponse:
     return JobStatus.Completed, {
         "signal": "created",
-        "study_accession": study_accession
+        "studyAccession": study_accession
     }
 
 
