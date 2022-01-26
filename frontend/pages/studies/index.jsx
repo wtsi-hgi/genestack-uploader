@@ -86,6 +86,20 @@ const NewStudy = () => {
     });
   };
 
+  const updateJobState = (jobID, refreshID) => {
+    apiRequest(`jobs/${jobID}`).then((t) => {
+      setSuccessfulRequest(t.status);
+
+      if (t.status === "FAILED") {
+        setApiError(JSON.stringify(t.output));
+        clearInterval(refreshID);
+      } else if (t.status === "COMPLETED") {
+        setCreatedStudyAccesion(t.output.accession);
+        clearInterval(refreshID);
+      }
+    })
+  }
+
   const submitStudy = async () => {
     // Check for required fields
     let requiredFields = templateFields.filter((e) => e.required);
@@ -101,22 +115,16 @@ const NewStudy = () => {
       return;
     }
 
-    // POST the request, and show LOADING
-    // if it succeeds, show success and the new study accession
-    // if it fails, show the error
-    setSuccessfulRequest("LOADING");
+    // POST the request, get the job ID
+    // We'll then poll the job every 20 seconds
+    // and update the UI if the job status changes
     setApiError("");
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
-    if (req_ok) {
-      setSuccessfulRequest("SUCCESS");
-      setTimeout(() => {
-        setSuccessfulRequest("");
-      }, 5000);
-      setCreatedStudyAccesion(JSON.parse(req_info).data.accession);
-    } else {
-      setSuccessfulRequest("FAIL");
-      setApiError(req_info);
-    }
+    let jobID = JSON.parse(req_info).jobId;
+    updateJobState(jobID, null)
+    let refreshID = setInterval(() => {
+      updateJobState(jobID, refreshID)
+    }, 20000)
   };
 
   return (
@@ -386,14 +394,29 @@ const NewStudy = () => {
         )}
       </form>
       <br />
-      {successfulRequest == "LOADING" && (
-        <div className="spinner-border" role="status"></div>
+      {
+        successfulRequest == "QUEUED" && (
+          <div className="alert alert-warning">
+          <div className="spinner-border spinner-border-sm" role="status">
+          </div>
+          Queued
+          </div>
+        )
+      }
+      {
+        successfulRequest == "RUNNING" && (
+          <div className="alert alert-primary">
+          <div className="spinner-border spinner-border-sm" role="status">
+          </div>
+          Running
+          </div>
+        )
+      }
+      {successfulRequest == "COMPLETED" && (
+        <div className="alert alert-success">Completed</div>
       )}
-      {successfulRequest == "SUCCESS" && (
-        <div className="alert alert-success">Success</div>
-      )}
-      {successfulRequest == "FAIL" && (
-        <div className="alert alert-warning">Fail</div>
+      {successfulRequest == "FAILED" && (
+        <div className="alert alert-danger">Failed</div>
       )}
       {apiError != "" && <code>{apiError}</code>}
       {createdStudyAccession != "" && (

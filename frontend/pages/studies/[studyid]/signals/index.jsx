@@ -2,7 +2,7 @@
 Genestack Uploader
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-Copyright (C) 2021 Genome Research Limited
+Copyright (C) 2021, 2022 Genome Research Limited
 
 Author: Michael Grace <mg38@sanger.ac.uk>
 
@@ -98,6 +98,20 @@ const NewSignal = () => {
     });
   };
 
+  const updateJobState = (jobID, refreshID) => {
+    apiRequest(`jobs/${jobID}`).then((t) => {
+      setSuccessfulRequest(t.status);
+
+      if (t.status === "FAILED") {
+        setApiError(JSON.stringify(t.output));
+        clearInterval(refreshID);
+      } else if (t.status === "COMPLETED") {
+        setCreatedStudyAccesion(t.output.accession);
+        clearInterval(refreshID);
+      }
+    })
+  }
+
   const submitSignal = async () => {
     let requiredFields = ["data", "tag"];
     let fieldsMissing = false;
@@ -118,15 +132,11 @@ const NewSignal = () => {
       `studies/${studyId}/signals`,
       newSignal
     );
-    if (req_ok) {
-      setSuccessfulRequest("SUCCESS");
-      setTimeout(() => {
-        setSuccessfulRequest("");
-      }, 5000);
-    } else {
-      setSuccessfulRequest("FAIL");
-      setApiError(req_info);
-    }
+    let jobID = JSON.parse(req_info).jobId;
+    updateJobState(jobID, null)
+    let refreshID = setInterval(() => {
+      updateJobState(jobID, refreshID)
+    }, 20000)
   };
 
   return (
@@ -345,14 +355,29 @@ const NewSignal = () => {
         )}
       </form>
       <br />
-      {successfulRequest == "LOADING" && (
-        <div className="spinner-border" role="status"></div>
+      {
+        successfulRequest == "QUEUED" && (
+          <div className="alert alert-warning">
+          <div className="spinner-border spinner-border-sm" role="status">
+          </div>
+          Queued
+          </div>
+        )
+      }
+      {
+        successfulRequest == "RUNNING" && (
+          <div className="alert alert-primary">
+          <div className="spinner-border spinner-border-sm" role="status">
+          </div>
+          Running
+          </div>
+        )
+      }
+      {successfulRequest == "COMPLETED" && (
+        <div className="alert alert-success">Completed</div>
       )}
-      {successfulRequest == "SUCCESS" && (
-        <div className="alert alert-success">Success</div>
-      )}
-      {successfulRequest == "FAIL" && (
-        <div className="alert alert-warning">Fail</div>
+      {successfulRequest == "FAILED" && (
+        <div className="alert alert-danger">Failed</div>
       )}
       {apiError != "" && <code>{apiError}</code>}
     </div>
