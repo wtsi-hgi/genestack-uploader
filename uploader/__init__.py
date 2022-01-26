@@ -28,7 +28,7 @@ import multiprocessing
 import os
 import typing as T
 import uuid
-from uploader.common import JobStatus
+from uploader.common import FINISHED_STATUSES, JobStatus
 from uploader.signal import new_signal
 
 from uploader.study import new_study
@@ -63,6 +63,12 @@ class JobType(enum.Enum):
     Study = new_study  # pylint: disable=invalid-name
     Signal = new_signal  # pylint: disable=invalid-name
 
+_str_to_status: T.Dict[str, JobStatus] = {
+    "QUEUED": JobStatus.Queued,
+    "RUNNING": JobStatus.Running,
+    "COMPLETED": JobStatus.Completed,
+    "FAILED": JobStatus.Failed
+}
 
 class GenestackUploadJob:
     """a representaion of an uploading job"""
@@ -157,10 +163,7 @@ class GenestackUploadJob:
             if self.status == JobStatus.Queued and status != JobStatus.Running:
                 raise InvalidJobStatusProgressionError
 
-            if self.status == JobStatus.Running and status not in {
-                JobStatus.Completed,
-                JobStatus.Failed
-            }:
+            if self.status == JobStatus.Running and status not in FINISHED_STATUSES:
                 raise InvalidJobStatusProgressionError
 
             if self.status in {JobStatus.Completed, JobStatus.Failed}:
@@ -192,7 +195,7 @@ class GenestackUploadJob:
     def output(self) -> T.Any:
         """if the job has finished, return it,
         otherwise raise JobNotFinishedError"""
-        if self.status in {JobStatus.Completed, JobStatus.Failed}:
+        if self.status in FINISHED_STATUSES:
             return self._output
 
         raise JobNotFinishedError
@@ -214,7 +217,7 @@ class GenestackUploadJob:
         if self.status != JobStatus.Queued:
             data["startTime"] = self.start_time.isoformat()
 
-        if self.status in {JobStatus.Failed, JobStatus.Completed}:
+        if self.status in FINISHED_STATUSES:
             data["endTime"] = self.end_time.isoformat()
             data["output"] = self.output
 
@@ -243,6 +246,26 @@ class GenestackUploadJob:
         same UUID"""
         with open(f".jobs/{self._uuid}", encoding="utf-8") as in_file:
             return json.loads(in_file.read())
+
+    @property
+    def expired(self) -> bool:
+        """read from the jobs JSON and see if
+        the job finished more than a week ago.
+        if so, return True and delete the job
+        file
+        
+        Returns:
+            bool: did the job finish more than a week ago
+        """
+        data: T.Dict[str, T.Any] = self.json
+        self._status = _str_to_status[data["status"]]
+        if self.status in FINISHED_STATUSES:
+            self._end_time = datetime.datetime.fromisoformat(data["endTime"])
+            if datetime.datetime.now() - self.end_time > datetime.timedelta(weeks=1):
+                os.remove(f".jobs/{self._uuid}")
+                return True
+        
+        return False
 
 
 def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:

@@ -420,9 +420,10 @@ def get_template_types():
 
 @api_blueprint.route("/jobs/<job_uuid>", methods=["GET"])
 def get_job(job_uuid: str):
-    print(all_jobs)
+    global all_jobs
+    all_jobs = {k:v for k, v in all_jobs.items() if not v.expired}
     try:
         _job = all_jobs[uuid.UUID(job_uuid)]
         return _job.json
     except KeyError as err:
-        return not_found(err)
+        return not_found(JobIDNotFound(*err.args))
