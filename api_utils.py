@@ -104,4 +104,7 @@ class JobIDNotFound(KeyError):
     this could be because it expired"""
 
     def __init__(self, *args: object) -> None:
-        super().__init__("Job ID not found. The job may have expired if it finished more than a week ago", *args)
+        super().__init__(
+            "Job ID not found. The job may have expired if it finished more than a week ago",
+            *args
+        )

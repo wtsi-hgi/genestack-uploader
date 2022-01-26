@@ -28,14 +28,37 @@ import typing as T
 import time
 
 import botocore
-from uploader import job_responses, s3
-
-from uploader.job_responses import JobResponse
 
 import uploadtogenestack
 
+from uploader import job_responses, s3
+from uploader.job_responses import JobResponse
 
-def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any], study_id: str) -> JobResponse:
+
+def new_signal(
+    token: str,
+    body: T.Dict[str, T.Any],
+    logger: logging.Logger,
+    env: T.Dict[str, T.Any],
+    study_id: str
+) -> JobResponse:
+    """
+        Creating a New Signal
+
+        Args:
+            token: str: genestack token
+            body: Dict[str, Any]: all the metadata needed - given
+                from the body of the API request
+            logger: logging.Logger: the job's logger object
+            env: Dict[str, Any]: the environment the jobs are run in
+            study_id: str: the study id of the study the signal is
+                linked to
+
+        Returns:
+            JobResponse: the response containing both a JobStatus
+                and Dict[str, Any] as the output for the user
+    """
+
     # As with the POST to create a new study, all the information we want
     # is in the JSON body
     if body is None:
@@ -74,11 +97,14 @@ def new_signal(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env
         with s3.S3PublicPolicy(s3_bucket):
             # Downloading S3 File
             logger.info(
-                f"downloading {body['data']} from S3 to /tmp/{body['data'].strip().replace('/', '_')}")
+                f"downloading {body['data']} from S3 to /tmp/{body['data'].strip().replace('/', '_')}")  # pylint: disable=line-too-long
 
             gs_config = env["gs_config"]
             s3_bucket.download_file(
-                body["data"].strip().replace(f"s3://{gs_config['genestackbucket']}/", ""), f"/tmp/{body['data'].strip().replace('/', '_')}")
+                body["data"].strip().replace(
+                    f"s3://{gs_config['genestackbucket']}/", ""),
+                f"/tmp/{body['data'].strip().replace('/', '_')}"
+            )
 
             body["data"] = f"/tmp/{body['data'].strip().replace('/', '_')}"
 

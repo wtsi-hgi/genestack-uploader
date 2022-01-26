@@ -36,7 +36,27 @@ from uploader import exceptions, job_responses, s3
 from uploader.job_responses import JobResponse
 
 
-def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env: T.Dict[str, T.Any], _) -> JobResponse:
+def new_study(
+        token: str,
+        body: T.Dict[str, T.Any],
+        logger: logging.Logger,
+        env: T.Dict[str, T.Any],
+        _) -> JobResponse:
+    """
+        Create a new study
+
+        Args:
+            token: str: genestack API token
+            body: Dict[str, Any]: all the metadata for the study,
+                this comes from the body of the API call
+            logger: logging.Logger: the job's logger object
+            env: Dict[str, Any]: the environment the jobs are run in
+
+        Returns:
+            JobResponse: containing both a JobStatus and Dict[str, Any],
+                which is the output for the user
+    """
+
     # Here we going to be creating a new study
     # The information we need will be stored in the response body
     # This should be JSON, and should actually exist
@@ -101,7 +121,9 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
 
                 # all this is under the assumption that we're going to rename anything,
                 # hence `if len(body["renamedColumns"]) != 0:`
-                if len(body["renamedColumns"]) + len(body["addedColumns"]) + len(body["deletedColumns"]) != 0:
+                if len(body["renamedColumns"]) + \
+                    len(body["addedColumns"]) + \
+                        len(body["deletedColumns"]) != 0:
                     logger.info("we have some columns to change")
                     logger.info(f"Change: {body['renamedColumns']}")
                     logger.info(f"Insert: {body['addedColumns']}")
@@ -116,9 +138,11 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
                     for col in body["renamedColumns"]:
                         col["colValue"] = "[fillvalue]"
 
-                    # We'll now go through the columns left in the samples file, and add them if they're not to be deleted
+                    # We'll now go through the columns left in the samples file, and add
+                    # them if they're not to be deleted
                     for header in headers:
-                        if header not in [x["old"].strip() for x in body["renamedColumns"]] and header not in [x.strip() for x in body["deletedColumns"]]:
+                        if header not in [x["old"].strip() for x in body["renamedColumns"]] \
+                                and header not in [x.strip() for x in body["deletedColumns"]]:
                             body["renamedColumns"].append({
                                 "old": header,
                                 "new": header,
@@ -164,7 +188,9 @@ def new_study(token: str, body: T.Dict[str, T.Any], logger: logging.Logger, env:
 
                     else:
                         logger.error("failed to validate the sample file")
-                        return job_responses.bad_request_error(exceptions.FailedToVerifyColumnRenamingError())
+                        return job_responses.bad_request_error(
+                            exceptions.FailedToVerifyColumnRenamingError()
+                        )
 
                 else:
                     logger.info("no columns to rename")

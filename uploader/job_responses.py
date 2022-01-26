@@ -33,6 +33,9 @@ S3_PERMISSION_DENIED: JobResponse = JobStatus.Failed, {
 
 
 def bad_request_error(err: Exception) -> JobResponse:
+    """returns a failed response when the user
+    provides invalid information for the upload"""
+
     return JobStatus.Failed, {
         "error": "bad request",
         "name": err.__class__.__name__,
@@ -41,12 +44,22 @@ def bad_request_error(err: Exception) -> JobResponse:
 
 
 def study_created(accession: str) -> JobResponse:
+    """returns a completed succesful response
+    when a study has been uploaded and
+    gives the newly created studyAccession"""
+
     return JobStatus.Completed, {
         "studyAccession": accession
     }
 
 
 def signal_created(study_accession: str) -> JobResponse:
+    """returns a completed succesful response
+    when a signal has been uploaded and
+    gives the accession of the study it
+    was uploaded to (yes, the user did
+    provide this anyway)"""
+
     return JobStatus.Completed, {
         "signal": "created",
         "studyAccession": study_accession
@@ -54,6 +67,9 @@ def signal_created(study_accession: str) -> JobResponse:
 
 
 def other_error(err: Exception) -> JobResponse:
+    """returns a failure response when something
+    not covered anywhere else happens"""
+
     return JobStatus.Failed, {
         "error": "error",
         "name": err.__class__.__name__,
@@ -62,6 +78,10 @@ def other_error(err: Exception) -> JobResponse:
 
 
 def not_found(err: Exception) -> JobResponse:
+    """returns a failure response when something
+    the user provides can't be found, such as
+    a study id"""
+
     return JobStatus.Failed, {
         "error": "not found",
         "name": err.__class__.__name__,

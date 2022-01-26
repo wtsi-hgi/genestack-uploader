@@ -20,30 +20,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import datetime
 import enum
 import json
 import logging
-import multiprocessing
 import os
 import typing as T
 import uuid
-from uploader.common import FINISHED_STATUSES, JobStatus
+from uploader.common import FINISHED_STATUSES, LOG_LEVEL, JobStatus
 from uploader.signal import new_signal
 
 from uploader.study import new_study
-
-LogLevel = T.Union[str, int]
-
-_str_to_log: T.Dict[str, LogLevel] = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL
-}
-
-LOG_LEVEL: LogLevel = _str_to_log[os.getenv("LOG_LEVEL", default="INFO")]
 
 try:
     JOB_EXPIRY_HOURS: int = int(os.getenv("JOB_EXPIRY_HOURS", default="168"))
@@ -288,7 +277,7 @@ class GenestackUploadJob:
         return False
 
 
-def job_handler(jobs_queue: "multiprocessing.Queue[GenestackUploadJob]") -> None:
+def job_handler(jobs_queue: multiprocessing.Queue[GenestackUploadJob]) -> None:  # pylint: disable=undefined-variable
     """job_handler runs a loop to block
     until it gets a job on the queue, then
     starts that job

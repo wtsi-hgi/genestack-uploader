@@ -77,6 +77,8 @@ jobs_queue: "multiprocessing.Queue[uploader.GenestackUploadJob]" = multiprocessi
 
 
 def start_multiproc():
+    """start the multiprocessing - another process handles
+    the upload jobs coming off the queue"""
     _jobs_process: multiprocessing.Process = multiprocessing.Process(
         target=uploader.job_handler,
         args=(jobs_queue,)
@@ -420,7 +422,15 @@ def get_template_types():
 
 @api_blueprint.route("/jobs/<job_uuid>", methods=["GET"])
 def get_job(job_uuid: str):
-    global all_jobs
+    """return the status of the job with uuid job_uuid
+
+    as it's finding the job, it'll also clear out any
+    expired jobs
+
+    if it doesn't find the job, it'll raise not_found
+    with a JobIDNotFound error
+    """
+    global all_jobs  # pylint: disable=global-statement,invalid-name
     all_jobs = {k: v for k, v in all_jobs.items() if not v.expired}
     try:
         _job = all_jobs[uuid.UUID(job_uuid)]

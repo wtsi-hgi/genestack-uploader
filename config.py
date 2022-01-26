@@ -20,9 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
 import os
 import typing as T
+
+import uploader.common
 
 # Configuration Settings
 
@@ -39,12 +40,4 @@ SERVER_ENDPOINT = f"https://genestack{'-qc' if GENESTACK_SERVER == 'qc' else ''}
 
 LogLevel = T.Union[str, int]
 
-_str_to_log: T.Dict[str, LogLevel] = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL
-}
-
-LOG_LEVEL: LogLevel = _str_to_log[os.getenv("LOG_LEVEL", default="INFO")]
+LOG_LEVEL: LogLevel = uploader.common.LOG_LEVEL

@@ -92,6 +92,9 @@ disable=raw-checker-failed,
         too-many-locals,
         too-many-branches,
         logging-fstring-interpolation,
+        too-many-instance-attributes,
+        too-many-statements,
+        duplicate-code,
         import-error ; this is to allow GH actions to approve uploadtogenestack
 
 # Enable the message, report, category or checker with the given id(s). You can
