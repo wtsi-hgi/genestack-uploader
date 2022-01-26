@@ -28,6 +28,7 @@ import { ArrowLeftCircle, Trash, QuestionCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { studiesIndexHelpText } from "../../utils/helpText";
 import Head from "next/head";
+import { JobStatus } from "../../utils/JobStatus";
 
 const NewStudy = () => {
   const [templates, setTemplates] = useState([]);
@@ -36,9 +37,7 @@ const NewStudy = () => {
 
   const [newStudy, setNewStudy] = useState(Object);
 
-  const [successfulRequest, setSuccessfulRequest] = useState("");
-  const [apiError, setApiError] = useState("");
-  const [createdStudyAccession, setCreatedStudyAccesion] = useState("");
+  const [jobID, setJobID] = useState("")
 
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showColNamesModal, setShowColNamesModal] = useState(false);
@@ -86,20 +85,6 @@ const NewStudy = () => {
     });
   };
 
-  const updateJobState = (jobID, refreshID) => {
-    apiRequest(`jobs/${jobID}`).then((t) => {
-      setSuccessfulRequest(t.status);
-
-      if (t.status === "FAILED") {
-        setApiError(JSON.stringify(t.output));
-        clearInterval(refreshID);
-      } else if (t.status === "COMPLETED") {
-        setCreatedStudyAccesion(t.output.accession);
-        clearInterval(refreshID);
-      }
-    })
-  }
-
   const submitStudy = async () => {
     // Check for required fields
     let requiredFields = templateFields.filter((e) => e.required);
@@ -111,20 +96,16 @@ const NewStudy = () => {
     });
 
     if (fieldsMissing) {
-      setApiError("Required Fields Missing");
+      window.alert("Required Fields Missing");
       return;
     }
 
     // POST the request, get the job ID
     // We'll then poll the job every 20 seconds
     // and update the UI if the job status changes
-    setApiError("");
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
     let jobID = JSON.parse(req_info).jobId;
-    updateJobState(jobID, null)
-    let refreshID = setInterval(() => {
-      updateJobState(jobID, refreshID)
-    }, 20000)
+    setJobID(jobID)
   };
 
   return (
@@ -394,38 +375,7 @@ const NewStudy = () => {
         )}
       </form>
       <br />
-      {
-        successfulRequest == "QUEUED" && (
-          <div className="alert alert-warning">
-          <div className="spinner-border spinner-border-sm" role="status">
-          </div>
-          Queued
-          </div>
-        )
-      }
-      {
-        successfulRequest == "RUNNING" && (
-          <div className="alert alert-primary">
-          <div className="spinner-border spinner-border-sm" role="status">
-          </div>
-          Running
-          </div>
-        )
-      }
-      {successfulRequest == "COMPLETED" && (
-        <div className="alert alert-success">Completed</div>
-      )}
-      {successfulRequest == "FAILED" && (
-        <div className="alert alert-danger">Failed</div>
-      )}
-      {apiError != "" && <code>{apiError}</code>}
-      {createdStudyAccession != "" && (
-        <a
-          href={`${process.env.NEXT_PUBLIC_HOST}/studies/${createdStudyAccession}`}
-        >
-          Go to New Study
-        </a>
-      )}
+      {jobID && (<JobStatus jobID={jobID} />)}
     </div>
   );
 };

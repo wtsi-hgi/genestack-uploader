@@ -29,6 +29,7 @@ import { Trash, ArrowLeftCircle } from "react-bootstrap-icons";
 import Link from "next/link";
 import { signalsIndexHelpText } from "../../../../utils/helpText";
 import Head from "next/head";
+import { JobStatus } from "../../../../utils/JobStatus";
 
 const NewSignal = () => {
   const router = useRouter();
@@ -45,8 +46,7 @@ const NewSignal = () => {
 
   const [newSignal, setNewSignal] = useState(Object);
 
-  const [successfulRequest, setSuccessfulRequest] = useState("");
-  const [apiError, setApiError] = useState("");
+  const [jobID, setJobID] = useState("");
 
   const [showHelpModal, setShowHelpModal] = useState(false);
 
@@ -98,20 +98,6 @@ const NewSignal = () => {
     });
   };
 
-  const updateJobState = (jobID, refreshID) => {
-    apiRequest(`jobs/${jobID}`).then((t) => {
-      setSuccessfulRequest(t.status);
-
-      if (t.status === "FAILED") {
-        setApiError(JSON.stringify(t.output));
-        clearInterval(refreshID);
-      } else if (t.status === "COMPLETED") {
-        setCreatedStudyAccesion(t.output.accession);
-        clearInterval(refreshID);
-      }
-    })
-  }
-
   const submitSignal = async () => {
     let requiredFields = ["data", "tag"];
     let fieldsMissing = false;
@@ -122,21 +108,16 @@ const NewSignal = () => {
     });
 
     if (fieldsMissing) {
-      setApiError("Required Fields Missing");
+      window.alert("Required Fields Missing");
       return;
     }
 
-    setSuccessfulRequest("LOADING");
-    setApiError("");
     var [req_ok, req_info] = await postApiReqiest(
       `studies/${studyId}/signals`,
       newSignal
     );
     let jobID = JSON.parse(req_info).jobId;
-    updateJobState(jobID, null)
-    let refreshID = setInterval(() => {
-      updateJobState(jobID, refreshID)
-    }, 20000)
+    setJobID(jobID);
   };
 
   return (
@@ -355,31 +336,7 @@ const NewSignal = () => {
         )}
       </form>
       <br />
-      {
-        successfulRequest == "QUEUED" && (
-          <div className="alert alert-warning">
-          <div className="spinner-border spinner-border-sm" role="status">
-          </div>
-          Queued
-          </div>
-        )
-      }
-      {
-        successfulRequest == "RUNNING" && (
-          <div className="alert alert-primary">
-          <div className="spinner-border spinner-border-sm" role="status">
-          </div>
-          Running
-          </div>
-        )
-      }
-      {successfulRequest == "COMPLETED" && (
-        <div className="alert alert-success">Completed</div>
-      )}
-      {successfulRequest == "FAILED" && (
-        <div className="alert alert-danger">Failed</div>
-      )}
-      {apiError != "" && <code>{apiError}</code>}
+      {jobID && (<JobStatus jobID={jobID} />)}
     </div>
   );
 };
