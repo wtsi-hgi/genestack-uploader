@@ -21,13 +21,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { useEffect, useState } from "react"
+import { QuestionCircle } from "react-bootstrap-icons";
 import { apiRequest } from "./api";
+import { HelpModal } from "./HelpModal";
 
 export const JobStatus = ({ jobID }) => {
 
     const [successfulRequest, setSuccessfulRequest] = useState("");
     const [apiError, setApiError] = useState("");
     const [createdStudyAccession, setCreatedStudyAccession] = useState("");
+    const [showModal, setShowModal] = useState(false);
 
     const updateJobState = (jobID, refreshID) => {
         apiRequest(`jobs/${jobID}`).then((t) => {
@@ -52,6 +55,20 @@ export const JobStatus = ({ jobID }) => {
 
     return (
         <div>
+            <HelpModal
+                header="Jobs"
+                helpText={`You have submitted an upload job 
+                which has been given this ID. You can send 
+                a request to this endpoint
+                to get information about the state of the job.`}
+                code={`${process.env.NEXT_PUBLIC_HOST}/api/jobs/${jobID}`}
+                show={showModal}
+                handleClose={() => {
+                    setShowModal(false);
+                }}
+            />
+
+            <b>Job ID:</b> {jobID} <QuestionCircle role="button" onClick={() => {setShowModal(true)}} />
             {
                 successfulRequest == "QUEUED" && (
                     <div className="alert alert-warning">
