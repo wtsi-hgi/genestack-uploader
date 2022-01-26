@@ -26,6 +26,7 @@ COPY frontend/package*.json ./
 RUN npm install
 
 COPY frontend .
+ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN npm run build
 
 # Main Container
