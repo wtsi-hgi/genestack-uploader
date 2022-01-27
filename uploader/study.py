@@ -274,5 +274,5 @@ def new_study(
             os.remove(tmp_rename_fp)  # type: ignore
             os.remove(tmp_fp)  # type: ignore
             shutil.rmtree(study.local_dir)  # type: ignore
-        except (FileNotFoundError, UnboundLocalError):
+        except (FileNotFoundError, UnboundLocalError, TypeError):
             pass

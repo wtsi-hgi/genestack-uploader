@@ -175,5 +175,5 @@ def new_signal(
             os.remove(tmp_fp)  # type: ignore
             os.remove(body["data"])  # type: ignore
             shutil.rmtree(study.local_dir)  # type: ignore
-        except (FileNotFoundError, UnboundLocalError):
+        except (FileNotFoundError, UnboundLocalError, TypeError):
             pass

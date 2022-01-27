@@ -341,7 +341,7 @@ def get_template(template_id: str):
         return MISSING_TOKEN
 
     try:
-        logger.error(f"getting single template {template_id}")
+        logger.info(f"getting single template {template_id}")
         gsu = uploadtogenestack.GenestackUtils(
             token=token, server=config.SERVER_ENDPOINT)
         template = gsu.ApplicationsODM(

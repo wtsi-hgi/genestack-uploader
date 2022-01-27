@@ -57,4 +57,9 @@ RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtog
 COPY . .
 COPY --from=webBuild /app/out frontend/out
 
-CMD ["waitress-serve", "--call", "app:production"]
+# Although this just runs it in Flask,
+# and it'll complain about it being run in
+# development mode, running it in a production
+# environment, the multiprocessing goes mad
+# trying to pickle objects.
+CMD ["python3", "app.py"]
