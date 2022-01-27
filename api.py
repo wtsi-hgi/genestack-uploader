@@ -132,7 +132,7 @@ def all_studies() -> Response:
         jobs_queue.put(_job)
         all_jobs[_job.uuid] = _job
 
-        return {"jobId": _job.uuid}, 202
+        return create_response({"jobId": _job.uuid}, 202)
 
     # *********** #
     # GET Handler #
@@ -434,6 +434,6 @@ def get_job(job_uuid: str):
     all_jobs = {k: v for k, v in all_jobs.items() if not v.expired}
     try:
         _job = all_jobs[uuid.UUID(job_uuid)]
-        return _job.json
+        return create_response(_job.json)
     except KeyError as err:
         return not_found(JobIDNotFound(*err.args))

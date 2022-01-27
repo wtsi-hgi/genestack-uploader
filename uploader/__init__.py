@@ -175,7 +175,7 @@ class GenestackUploadJob:
             if self.status == JobStatus.Running and status not in FINISHED_STATUSES:
                 raise InvalidJobStatusProgressionError
 
-            if self.status in {JobStatus.Completed, JobStatus.Failed}:
+            if self.status in FINISHED_STATUSES:
                 raise InvalidJobStatusProgressionError
 
             self._status = status

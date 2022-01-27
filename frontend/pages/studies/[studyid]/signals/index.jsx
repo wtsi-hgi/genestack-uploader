@@ -116,7 +116,7 @@ const NewSignal = () => {
       `studies/${studyId}/signals`,
       newSignal
     );
-    let jobID = JSON.parse(req_info).jobId;
+    let jobID = JSON.parse(req_info).data.jobId;
     setJobID(jobID);
   };
 

@@ -33,13 +33,13 @@ export const JobStatus = ({ jobID }) => {
 
   const updateJobState = (jobID, refreshID) => {
     apiRequest(`jobs/${jobID}`).then((t) => {
-      setSuccessfulRequest(t.status);
+      setSuccessfulRequest(t.data.status);
 
-      if (t.status === "FAILED") {
+      if (t.data.status === "FAILED") {
         setApiError(JSON.stringify(t.output));
         clearInterval(refreshID);
-      } else if (t.status === "COMPLETED") {
-        setStudyAccession(t.output.studyAccession);
+      } else if (t.data.status === "COMPLETED") {
+        setStudyAccession(t.data.output.studyAccession);
         clearInterval(refreshID);
       }
     });

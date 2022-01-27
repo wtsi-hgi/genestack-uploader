@@ -105,7 +105,7 @@ const NewStudy = () => {
     // We'll then poll the job every 20 seconds
     // and update the UI if the job status changes
     var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
-    let jobID = JSON.parse(req_info).jobId;
+    let jobID = JSON.parse(req_info).data.jobId;
     setJobID(jobID);
   };
 

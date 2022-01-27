@@ -61,7 +61,7 @@ paths:
     post:
       tags:
         - studies
-      summary: Add a new study to Genestack
+      summary: Start a job to add a new study to Genestack
       requestBody:
         description: The body contains all the data we need to create the study, including the samples file, any columns getting renamed and the rest of the metadata.
         content:
@@ -70,20 +70,10 @@ paths:
               $ref: "#/components/schemas/NewStudy"
         required: true
       responses:
-        201:
-          description: Study Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StudyCreated"
-        400:
-          $ref: "#/components/responses/400"
+        202:
+          $ref: "#/components/responses/202"
         401:
           $ref: "#/components/responses/401"
-        403:
-          $ref: "#/components/responses/403WithS3"
-        500:
-          $ref: "#/components/responses/500"
       security:
         - GenestackAPIToken: []
 
@@ -150,7 +140,7 @@ paths:
     post:
       tags:
         - studies
-      summary: Add a new signal to Genestack
+      summary: Submit a job to add a new signal to Genestack
       parameters:
         - name: studyAccession
           in: path
@@ -166,22 +156,10 @@ paths:
               $ref: "#/components/schemas/NewSignal"
         required: true
       responses:
-        201:
-          description: Signal Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Created"
-        400:
-          $ref: "#/components/responses/400"
+        202:
+          $ref: "#/components/responses/202"
         401:
           $ref: "#/components/responses/401"
-        403:
-          $ref: "#/components/responses/403WithS3"
-        404:
-          $ref: "#/components/responses/404"
-        500:
-          $ref: "#/components/responses/500"
       security:
         - GenestackAPIToken: []
 
@@ -293,6 +271,29 @@ paths:
       security:
         - GenestackAPIToken: []
 
+  /jobs/{id}:
+    get:
+      tags:
+        - jobs
+      parameters:
+        - name: id
+          in: path
+          description: Job ID
+          required: true
+          schema:
+            type: string
+      summary: Get the information about a particular job
+      responses:
+        200:
+          description: Job Found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/JobQueued"
+                  - $ref: "#/components/schemas/JobRunning"
+                  - $ref: "#/components/schemas/JobFinished"
+
 components:
   schemas:
     Status:
@@ -316,6 +317,19 @@ components:
               type: string
               description: version number of the uploadtogenestack package
               example: "1.0"
+
+    JobSubmitted:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+        data:
+          type: object
+          properties:
+            jobId:
+              type: string
+              example: "ABCDE-12345-HIJKL-67890-MNOPQ"
 
     Study:
       type: object
@@ -388,15 +402,9 @@ components:
     StudyCreated:
       type: object
       properties:
-        status:
+        studyAccession:
           type: string
-          default: OK
-        data:
-          type: object
-          properties:
-            accession:
-              type: string
-              example: GSF123456
+          example: GSF123456
 
     StudyFound:
       type: object
@@ -459,15 +467,16 @@ components:
           type: boolean
           description: Whether to generate a minimal VCF file. This only applies if `type` is "Variant".
 
-    Created:
+    SignalCreated:
       type: object
       properties:
-        status:
+        signal:
           type: string
-          default: OK
-        data:
+          default: "created"
+        studyAccession:
+          description: the accession of the study the signal was linked to
           type: string
-          default: Created
+          example: GSF123456
 
     SignalFound:
       type: object
@@ -541,48 +550,23 @@ components:
     InvalidRequest:
       type: object
       properties:
-        status:
+        error:
           type: string
-          default: FAIL
-        data:
-          type: object
-          properties:
-            error:
-              type: string
-              default: bad request
-            name:
-              type: string
-              example: LinkingNotPossibleError
-            detail:
-              type: array
-              items:
-                type: object
+          default: bad request
+        name:
+          type: string
+          example: LinkingNotPossibleError
+        detail:
+          type: array
+          items:
+            type: object
 
     InvalidBody:
       type: object
       properties:
-        status:
+        error:
           type: string
-          default: FAIL
-        data:
-          type: object
-          properties:
-            error:
-              type: string
-              default: no valid json body
-
-    MissingBodyKey:
-      type: object
-      properties:
-        status:
-          type: string
-          default: FAIL
-        data:
-          type: object
-          properties:
-            error:
-              type: string
-              example: "missing key: KeyMissingError"
+          default: no valid json body
 
     MissingToken:
       type: object
@@ -596,6 +580,13 @@ components:
             error:
               type: string
               default: missing token
+
+    JobReturnsForbidden:
+      type: object
+      properties:
+        error:
+          type: string
+          default: forbidden
 
     Forbidden:
       type: object
@@ -613,16 +604,24 @@ components:
     S3PermissionDenied:
       type: object
       properties:
-        status:
+        error:
           type: string
-          default: FAIL
-        data:
-          type: object
-          properties:
-            error:
-              type: string
-              default: S3 bucket permission denied
+          default: S3 bucket permission denied
 
+    JobReturnsNotFound:
+      type: object
+      properties:
+        error:
+          type: string
+          default: "not found"
+        name:
+          type: string
+          example: StudyNotFoundError
+        detail:
+            type: array
+            items:
+                type: object
+    
     NotFound:
       type: object
       properties:
@@ -642,6 +641,20 @@ components:
                 type: array
                 items:
                     type: object
+
+    JobReturnsOtherError:
+      type: object
+      properties:
+        error:
+          type: string
+          default: internal server error
+        name:
+          type: string
+          example: GenestackUploadError
+        detail:
+          type: array
+          items:
+            type: object
 
     InternalServerError:
       type: object
@@ -663,16 +676,74 @@ components:
               items:
                 type: object
 
+    JobQueued:
+      type: object
+      properties:
+        status:
+          type: string
+          default: OK
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              default: QUEUED
+
+    JobRunning:
+      type: object
+      properties:
+        status:
+          type: string
+          default: OK
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              default: RUNNING
+            startTime:
+              type: string
+              example: "2022-01-26T16:00:00.000000"
+
+    JobFinished:
+      type: object
+      properties:
+        status:
+          type: string
+          default: OK
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              oneOf:
+                - COMPLETED
+                - FAILED
+            startTime:
+              type: string
+              example: "2022-01-26T16:00:00.000000"
+            endTime:
+              type: string
+              example: "2022-01-26T17:00:00.000000"
+            output:
+              type: object
+              oneOf:
+                - $ref: "#/components/schemas/InvalidRequest"
+                - $ref: "#/components/schemas/InvalidBody"
+                - $ref: "#/components/schemas/StudyCreated"
+                - $ref: "#/components/schemas/SignalCreated"
+                - $ref: "#/components/schemas/S3PermissionDenied"
+                - $ref: "#/components/schemas/JobReturnsNotFound"
+                - $ref: "#/components/schemas/JobReturnsOtherError"
+                - $ref: "#/components/schemas/JobReturnsForbidden"
+
   responses:
-    400:
-      description: invalid request
+    202:
+      description: job submitted
       content:
         application/json:
           schema:
-            oneOf:
-              - $ref: "#/components/schemas/InvalidRequest"
-              - $ref: "#/components/schemas/InvalidBody"
-              - $ref: "#/components/schemas/MissingBodyKey"
+            $ref: "#/components/schemas/JobSubmitted"
 
     401:
       description: missing token
@@ -687,15 +758,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Forbidden"
-
-    403WithS3:
-      description: forbidden
-      content:
-        application/json:
-          schema:
-            oneOf:
-              - $ref: "#/components/schemas/Forbidden"
-              - $ref: "#/components/schemas/S3PermissionDenied"
 
     404:
       description: not found
