@@ -396,6 +396,10 @@ components:
             type: string
             description: column titles
             example: col0
+        template:
+          type: string
+          description: the genestack accession of the template in use
+          example: GSF123456
       additionalProperties:
         type: string
 
