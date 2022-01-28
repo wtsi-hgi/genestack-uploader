@@ -93,34 +93,21 @@ def new_study(
                 s3_bucket.download_file(body["Sample File"].strip().replace(
                     f"s3://{gs_config['genestackbucket']}/", ""), sample_file)
 
-                # Reanming Sample File Columns
+                # Changing Sample File Columns
 
                 # The user has the oppurtunity to rename columns in the sample file,
-                # or create new columns in the sample file before it gets uploaded.
-                # We get passed {old: ..., new: ..., colValue: ...} objects giving us
-                # the column name to rename, the new column name and the value that should
-                # be in the column. Leaving colValue blank shows we want to use the values
-                # that are already in that column (which can be different in every row).
-                # Filling in colValue means we want the same value in each cell, which
-                # can be used when making new columns. This involves leaving `old` as
-                # an empty string
+                # create new columns in the sample file or delete them before it gets uploaded.
 
-                # The other important thing is that is a column isn't included, it'll be
-                # deleted. We don't give the user the option to delete columns, so we need
-                # to ensure that ALL current columns are also included. For this, we read
-                # the headers of the sample file, and add those records in, keeping old and
-                # new the same, and leaving colValue blank, so it uses the already existing
-                # values.
-
-                # Then we open a file to write this all to, how the uploadtogenestack package
+                # We open a file to write this all to, how the uploadtogenestack package
                 # expects it to be. This is a `|` separated file, with a header row:
                 # old|new|fillvalue
                 # where fillvalue is what we've called colValue up to now
                 # Then we can pass the samples file, this new temp file to the package, and
                 # get back the path of a new samples file, which we'll use later on.
 
-                # all this is under the assumption that we're going to rename anything,
-                # hence `if len(body["renamedColumns"]) != 0:`
+                # all this is under the assumption that we're going to change anything,
+                # hence `if len(body["renamedColumns"]) + ... != 0:`
+
                 if len(body["renamedColumns"]) + \
                     len(body["addedColumns"]) + \
                         len(body["deletedColumns"]) != 0:

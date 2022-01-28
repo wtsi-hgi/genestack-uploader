@@ -24,7 +24,6 @@ import logging
 from multiprocessing import freeze_support
 import flask
 from flask_swagger_ui import get_swaggerui_blueprint
-import waitress
 from api import api_blueprint, start_multiproc
 import config
 
@@ -90,9 +89,6 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 )
 
 app.register_blueprint(swaggerui_blueprint, url_prefix="/docs")
-
-# when running in pruduction, we use waitress
-# when in development, we just use Flask (if __name__ == "__main__")
 
 if __name__ == "__main__":
     freeze_support()
