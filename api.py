@@ -435,5 +435,5 @@ def get_job(job_uuid: str):
     try:
         _job = all_jobs[uuid.UUID(job_uuid)]
         return create_response(_job.json)
-    except KeyError as err:
+    except (KeyError, ValueError) as err:
         return not_found(JobIDNotFound(*err.args))
