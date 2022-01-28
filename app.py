@@ -93,4 +93,4 @@ app.register_blueprint(swaggerui_blueprint, url_prefix="/docs")
 if __name__ == "__main__":
     freeze_support()
     start_multiproc()
-    app.run()
+    app.run("0.0.0.0")
