@@ -120,6 +120,23 @@ def new_study(
                         reader = csv.reader(samples, delimiter="\t")
                         headers = next(reader)
 
+                    # Let's remove any records that are fully blank""
+                    body["renamedColumns"] = [
+                        x for x in body["renamedColumns"] if x["old"] != "" and x["new"] != ""]
+                    body["addedColumns"] = [x for x in body["addedColumns"]
+                                            if x["title"] != "" and x["value"] != ""]
+
+                    # Let's check there's no entries not fully filled in
+                    if [x for x in body["renamedColumns"] if x["old"] == "" or x["new"] == ""] or \
+                            [x for x in body["addedColumns"]
+                             if x["title"] == "" or x["value"] == ""]:
+                        logger.error(
+                            "records not complete in added/renamed columns")
+                        return job_responses.bad_request_error(
+                            ValueError(
+                                "records not complete in added/renamed columns")
+                        )
+
                     # Everything's going to go into the renamedColumns dict
                     # First, we need to add [fillvalue] to the values as the file requires
                     for col in body["renamedColumns"]:
