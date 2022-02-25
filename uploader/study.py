@@ -32,7 +32,7 @@ import typing as T
 import botocore
 import uploadtogenestack
 
-from uploader import exceptions, job_responses, s3
+from uploader import job_responses, s3
 from uploader.job_responses import JobResponse
 
 
@@ -160,10 +160,11 @@ def new_study(
                                     col_rename["colValue"].strip()
                                 ]) + "\n")
 
-                    if uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
-                        tmp_rename_fp,
-                        sample_file
-                    ):
+                    try:
+                        uploadtogenestack.GenestackUploadUtils.check_suggested_columns(
+                            tmp_rename_fp,
+                            sample_file
+                        )
                         logger.info(
                             "the rename file was fine, now we'll modify the sample file")
                         sample_file = Path(
@@ -173,11 +174,10 @@ def new_study(
                             )
                         )
 
-                    else:
+                    except uploadtogenestack.genestackassist.ColumnRenamingError as err:
                         logger.error("failed to validate the sample file")
-                        return job_responses.bad_request_error(
-                            exceptions.FailedToVerifyColumnRenamingError()
-                        )
+                        logger.exception(err)
+                        return job_responses.bad_request_error(err)
 
                 else:
                     logger.info("no columns to rename")
@@ -224,11 +224,6 @@ def new_study(
 
     except KeyError as err:
         logger.error("missing key")
-        logger.exception(err)
-        return job_responses.bad_request_error(err)
-
-    except uploadtogenestack.genestackassist.WrongFieldRenaming as err:
-        logger.error("renaming columns user error")
         logger.exception(err)
         return job_responses.bad_request_error(err)
 
