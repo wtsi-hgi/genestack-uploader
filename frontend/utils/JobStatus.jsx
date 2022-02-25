@@ -36,7 +36,7 @@ export const JobStatus = ({ jobID }) => {
       setSuccessfulRequest(t.data.status);
 
       if (t.data.status === "FAILED") {
-        setApiError(JSON.stringify(t.output));
+        setApiError(JSON.stringify(t.data.output));
         clearInterval(refreshID);
       } else if (t.data.status === "COMPLETED") {
         setStudyAccession(t.data.output.studyAccession);
