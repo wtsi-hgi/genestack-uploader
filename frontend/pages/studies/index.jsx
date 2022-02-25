@@ -101,6 +101,23 @@ const NewStudy = () => {
       return;
     }
 
+    let colRenameRequired = false;
+    newStudy.addedColumns.forEach((e) => {
+      if (e.title == "" || e.value == "") {
+        colRenameRequired = true;
+      }
+    });
+    newStudy.renamedColumns.forEach((e) => {
+      if (e.old == "" || e.new == "") {
+        colRenameRequired = true;
+      }
+    });
+
+    if (colRenameRequired) {
+      window.alert("Blank fields in Column Renaming");
+      return;
+    }
+
     // POST the request, get the job ID
     // We'll then poll the job every 20 seconds
     // and update the UI if the job status changes
