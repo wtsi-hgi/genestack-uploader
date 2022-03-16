@@ -29,11 +29,13 @@ import Link from "next/link";
 import { studiesIndexHelpText } from "../../utils/helpText";
 import Head from "next/head";
 import { JobStatus } from "../../utils/JobStatus";
+import { AutocompleteField } from "../../utils/AutocompleteField";
 
 const NewStudy = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [templateFields, setTemplateFields] = useState([]);
+  const [sampleTemplateFields, setSampleTemplateFields] = useState([]);
 
   const [newStudy, setNewStudy] = useState(Object);
 
@@ -45,7 +47,7 @@ const NewStudy = () => {
   useEffect(() => {
     keyCheck();
     apiRequest("templates").then((t) => {
-      var templates = t.data.map((e) => ({
+      let templates = t.data.map((e) => ({
         name: e.name,
         accession: e.accession,
       }));
@@ -70,7 +72,7 @@ const NewStudy = () => {
      * empty list for the columns we're going to rename.
      */
     apiRequest(`templates/${selectedTemplate}`).then((t) => {
-      var fields = t.data.template
+      let fields = t.data.template
         .filter((e) => !e.isReadOnly && e.dataType == "study")
         .map((e) => ({ name: e.name, required: e.isRequired }));
       fields.unshift({ name: "Sample File", required: false });
@@ -83,6 +85,10 @@ const NewStudy = () => {
         })
       );
       setTemplateFields(fields);
+      let sampleFields = t.data.template
+        .filter((e) => !e.isReadOnly && e.dataType == "genestack:sampleObject")
+        .map((e) => e.name);
+      setSampleTemplateFields(sampleFields);
     });
   };
 
@@ -121,7 +127,7 @@ const NewStudy = () => {
     // POST the request, get the job ID
     // We'll then poll the job every 20 seconds
     // and update the UI if the job status changes
-    var [req_ok, req_info] = await postApiReqiest("studies", newStudy);
+    let [req_ok, req_info] = await postApiReqiest("studies", newStudy);
     let jobID = JSON.parse(req_info).data.jobId;
     setJobID(jobID);
   };
@@ -233,15 +239,17 @@ const NewStudy = () => {
             <br />
             {newStudy.addedColumns.map((val, idx) => (
               <div className="form-control" key={`adding-${idx}-${val.title}`}>
-                <input
-                  type="text"
+                <AutocompleteField
                   defaultValue={val.title}
                   placeholder="Title"
-                  onBlur={(e) => {
+                  blurHandler={(newValue) => {
                     let tmp_added = newStudy.addedColumns;
-                    tmp_added[idx].title = e.target.value;
+                    tmp_added[idx].title = newValue;
+                    console.log(e)
                     setNewStudy({ ...newStudy, addedColumns: tmp_added });
                   }}
+                  suggestions={sampleTemplateFields}
+                  keyID={`adding-${idx}-${val.title}`}
                 />
                 <input
                   type="text"
@@ -290,22 +298,23 @@ const NewStudy = () => {
                 className="form-control"
                 key={`renaming-${idx}-${val.old}-${val.new}`}
               >
-                <input
-                  type="text"
-                  defaultValue={val.old}
-                  placeholder="Old"
-                  onBlur={(e) => {
-                    var tmp_renames = newStudy.renamedColumns;
-                    tmp_renames[idx].old = e.target.value;
+                <AutocompleteField
+                  blurHandler={(newValue) => {
+                    let tmp_renames = newStudy.renamedColumns;
+                    tmp_renames[idx].old = newValue;
                     setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
+                  defaultValue={val.old}
+                  placeholder="Old"
+                  suggestions={sampleTemplateFields}
+                  keyID={`renaming-${idx}-${val.old}-${val.new}`}
                 />
                 <input
                   type="text"
                   defaultValue={val.new}
                   placeholder="New"
                   onBlur={(e) => {
-                    var tmp_renames = newStudy.renamedColumns;
+                    let tmp_renames = newStudy.renamedColumns;
                     tmp_renames[idx].new = e.target.value;
                     setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
@@ -314,7 +323,7 @@ const NewStudy = () => {
                   type="button"
                   className="btn btn-sm btn-danger"
                   onClick={() => {
-                    var tmp = newStudy.renamedColumns;
+                    let tmp = newStudy.renamedColumns;
                     tmp.splice(idx, 1);
                     setNewStudy({ ...newStudy, renamedColumns: tmp });
                   }}
@@ -344,16 +353,18 @@ const NewStudy = () => {
             <br />
             {newStudy.deletedColumns.map((val, idx) => (
               <div className="form-control" key={`deleting-${idx}-${val}`}>
-                <input
-                  type="text"
-                  defaultValue={val}
-                  placeholder="Column Title"
-                  onBlur={(e) => {
+                <AutocompleteField
+                  blurHandler={(e) => {
                     let tmp_deletes = newStudy.deletedColumns;
-                    tmp_deletes[idx] = e.target.value;
+                    tmp_deletes[idx] = e.target.innerText;
                     setNewStudy({ ...newStudy, deletedColumns: tmp_deletes });
                   }}
+                  defaultValue={val}
+                  placeholder="Column Title"
+                  suggestions={sampleTemplateFields}
+                  keyID={`deleting-${idx}-${val}`}
                 />
+
                 <button
                   type="button"
                   className="btn btn-sm btn-danger"

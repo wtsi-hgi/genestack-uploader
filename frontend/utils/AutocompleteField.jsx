@@ -24,10 +24,16 @@ import { Fragment } from "react";
 import { useState } from "react";
 import styles from "../styles/Home.module.css";
 
-export const AutocompleteField = ({ suggestions }) => {
+export const AutocompleteField = ({
+  suggestions,
+  defaultValue,
+  placeholder,
+  blurHandler,
+  keyID
+}) => {
   const [filteredSuggestsions, setFilteredSuggestions] = useState(suggestions);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [userInput, setUserInput] = useState("");
+  const [userInput, setUserInput] = useState(defaultValue);
 
   const textChangeHandler = (e) => {
     let newUserInput = e.currentTarget.value;
@@ -43,16 +49,26 @@ export const AutocompleteField = ({ suggestions }) => {
   const clickHandler = (e) => {
     setFilteredSuggestions([]);
     setShowSuggestions(false);
-    setUserInput(e.currentTarget.innerText);
+    console.log(e)
+    setUserInput(e.target.innerText);
+    console.log(e.target)
+    blurHandler(e.target.innerText);
   };
 
   return (
     <Fragment>
-      <input type="text" onChange={textChangeHandler} value={userInput} />
+      <input
+        type="text"
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        onBlur={(e) => {blurHandler(e.target.value)}}
+        onChange={textChangeHandler}
+        value={userInput}
+      />
       {showSuggestions && userInput && filteredSuggestsions.length != 0 && (
         <ul className={styles.suggestions}>
           {filteredSuggestsions.map((suggestion, idx) => (
-            <li key={`suggestiom-${idx}`} onClick={clickHandler}>
+            <li key={`suggestion-${keyID}-${idx}`} onClick={clickHandler}>
               {suggestion}
             </li>
           ))}
