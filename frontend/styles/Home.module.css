@@ -163,3 +163,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   font-size: 200% !important;
   color: #666 !important;
 }
+
+.suggestions {
+  list-style: none;
+}
+
+.suggestions li {
+  padding: 0.5rem;
+  border: 1px solid black;
+}
+
+.suggestions li:hover {
+  background-color: #777;
+  color: #fff;
+  cursor: pointer;
+}
