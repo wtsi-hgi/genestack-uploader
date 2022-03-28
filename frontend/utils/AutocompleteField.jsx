@@ -49,19 +49,17 @@ export const AutocompleteField = ({
   const clickHandler = (e) => {
     setFilteredSuggestions([]);
     setShowSuggestions(false);
-    console.log(e)
+
     setUserInput(e.target.innerText);
-    console.log(e.target)
     blurHandler(e.target.innerText);
   };
 
   return (
-    <Fragment>
+    <Fragment onBlur={() => {blurHandler(userInput)}}>
       <input
         type="text"
         defaultValue={defaultValue}
         placeholder={placeholder}
-        onBlur={(e) => {blurHandler(e.target.value)}}
         onChange={textChangeHandler}
         value={userInput}
       />

@@ -245,11 +245,10 @@ const NewStudy = () => {
                   blurHandler={(newValue) => {
                     let tmp_added = newStudy.addedColumns;
                     tmp_added[idx].title = newValue;
-                    console.log(e)
                     setNewStudy({ ...newStudy, addedColumns: tmp_added });
                   }}
                   suggestions={sampleTemplateFields}
-                  keyID={`adding-${idx}-${val.title}`}
+                  keyID={`adding-${idx}`}
                 />
                 <input
                   type="text"
@@ -307,17 +306,18 @@ const NewStudy = () => {
                   defaultValue={val.old}
                   placeholder="Old"
                   suggestions={sampleTemplateFields}
-                  keyID={`renaming-${idx}-${val.old}-${val.new}`}
+                  keyID={`renaming-${idx}-old`}
                 />
-                <input
-                  type="text"
+                <AutocompleteField
+                  blurHandler={(newValue) => {
+                    let tmp_renames = newStudy.renamedColumns;
+                    tmp_renames[idx].new = newValue;
+                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                  }}
                   defaultValue={val.new}
                   placeholder="New"
-                  onBlur={(e) => {
-                    let tmp_renames = newStudy.renamedColumns;
-                    tmp_renames[idx].new = e.target.value;
-                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
-                  }}
+                  suggestions={sampleTemplateFields}
+                  keyID={`renaming-${idx}-new`}
                 />
                 <button
                   type="button"
@@ -356,13 +356,13 @@ const NewStudy = () => {
                 <AutocompleteField
                   blurHandler={(e) => {
                     let tmp_deletes = newStudy.deletedColumns;
-                    tmp_deletes[idx] = e.target.innerText;
+                    tmp_deletes[idx] = e;
                     setNewStudy({ ...newStudy, deletedColumns: tmp_deletes });
                   }}
                   defaultValue={val}
                   placeholder="Column Title"
                   suggestions={sampleTemplateFields}
-                  keyID={`deleting-${idx}-${val}`}
+                  keyID={`deleting-${idx}`}
                 />
 
                 <button
