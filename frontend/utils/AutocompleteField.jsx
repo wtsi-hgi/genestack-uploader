@@ -29,7 +29,7 @@ export const AutocompleteField = ({
   defaultValue,
   placeholder,
   blurHandler,
-  keyID
+  keyID,
 }) => {
   const [filteredSuggestsions, setFilteredSuggestions] = useState(suggestions);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -55,7 +55,11 @@ export const AutocompleteField = ({
   };
 
   return (
-    <Fragment onBlur={() => {blurHandler(userInput)}}>
+    <Fragment
+      onBlur={() => {
+        blurHandler(userInput);
+      }}
+    >
       <input
         type="text"
         defaultValue={defaultValue}

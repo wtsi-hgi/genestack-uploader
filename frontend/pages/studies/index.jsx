@@ -312,7 +312,7 @@ const NewStudy = () => {
                   blurHandler={(newValue) => {
                     let tmp_renames = newStudy.renamedColumns;
                     tmp_renames[idx].new = newValue;
-                    setNewStudy({...newStudy, renamedColumns: tmp_renames})
+                    setNewStudy({ ...newStudy, renamedColumns: tmp_renames });
                   }}
                   defaultValue={val.new}
                   placeholder="New"
