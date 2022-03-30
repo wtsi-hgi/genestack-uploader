@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Fragment } from "react";
 import { useState } from "react";
 import styles from "../styles/Home.module.css";
 
@@ -31,34 +30,38 @@ export const AutocompleteField = ({
   blurHandler,
   keyID,
 }) => {
-  const [filteredSuggestsions, setFilteredSuggestions] = useState(suggestions);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestsions, setFilteredSuggestions] = useState([]);
   const [userInput, setUserInput] = useState(defaultValue);
 
   const textChangeHandler = (e) => {
+    // this is called when we type anything in the box
+    // it will refilter the suggestions, and set userInput
     let newUserInput = e.currentTarget.value;
     let newFilteredSuggestions = suggestions.filter(
       (s) => s.toLowerCase().indexOf(newUserInput.toLowerCase()) > -1
     );
 
     setFilteredSuggestions(newFilteredSuggestions);
-    setShowSuggestions(true);
     setUserInput(newUserInput);
   };
 
   const clickHandler = (e) => {
-    setFilteredSuggestions([]);
-    setShowSuggestions(false);
-
+    // this is called when we click a dropdown option
+    // it sets userInput
     setUserInput(e.target.innerText);
-    blurHandler(e.target.innerText);
   };
 
   return (
-    <Fragment
+    <div
       onBlur={() => {
+        // when we click off it, we call
+        // the blur handler and clear
+        // the suggestions dropdown
+        setFilteredSuggestions([]);
         blurHandler(userInput);
       }}
+      className="d-inline"
+      tabIndex={0}
     >
       <input
         type="text"
@@ -67,15 +70,25 @@ export const AutocompleteField = ({
         onChange={textChangeHandler}
         value={userInput}
       />
-      {showSuggestions && userInput && filteredSuggestsions.length != 0 && (
+
+      {userInput && filteredSuggestsions.length != 0 && (
         <ul className={styles.suggestions}>
           {filteredSuggestsions.map((suggestion, idx) => (
-            <li key={`suggestion-${keyID}-${idx}`} onClick={clickHandler}>
+            <li key={`suggestion-${keyID}-${idx}`} onMouseDown={clickHandler}>
               {suggestion}
             </li>
           ))}
+
+          <li
+            className={styles.closeSuggestions}
+            onMouseDown={() => {
+              setFilteredSuggestions([]);
+            }}
+          >
+            Close Suggestions
+          </li>
         </ul>
       )}
-    </Fragment>
+    </div>
   );
 };
