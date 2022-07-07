@@ -27,7 +27,7 @@ import uploader.common
 
 # Configuration Settings
 
-VERSION = "2.2"
+VERSION = "2.3"
 
 # this is the end of the base url, identical to frontend/.env
 # this only affects the swagger ui
