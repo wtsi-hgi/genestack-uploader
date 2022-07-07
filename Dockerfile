@@ -51,7 +51,7 @@ WORKDIR /app
 COPY requirements.txt ./
 
 RUN pip3 install -r requirements.txt
-RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtogenestack@2.10#egg=uploadtogenestack
+RUN pip3 install git+https://gitlab.internal.sanger.ac.uk/hgi-projects/uploadtogenestack@2.11#egg=uploadtogenestack
 
 # Copying Python scripts, and built frontend
 COPY . .
