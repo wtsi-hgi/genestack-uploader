@@ -217,7 +217,7 @@ def all_signals(study_id: str) -> Response:
         jobs_queue.put(_job)
         all_jobs[_job.uuid] = _job
 
-        return {"jobId": _job.uuid}, 202
+        return create_response({"jobId": _job.uuid}, 202)
 
     # *********** #
     # GET Handler #
