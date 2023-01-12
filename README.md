@@ -12,16 +12,28 @@ VERSION = "2.4"
 
 2. `hgi-docker.sh` can build dev and production images automatically with right `frontend/.env` files. 
 
-```
-./hgi-docker.sh 2.4
-```
 It creates `mercury/genestack-uploader:2.4.dev` and `mercury/genestack-uploader:2.4.prod` with the appropriate configuration in the image.
+```
+sudo ./hgi-docker.sh 2.4
+```
+
+Check built imgages
+```
+sudo docker images
+REPOSITORY                   TAG        IMAGE ID       CREATED          SIZE
+mercury/genestack-uploader   2.4.prod   ff7989cfc80c   14 minutes ago   1.3GB
+mercury/genestack-uploader   2.4.dev    2cdf3ab5dbe3   14 minutes ago   1.3GB
+
+```
 
 3. push the image to DockerHub
 
+Log in docker with mercury first. (check secrets). Then push.
+
 ```
-docker push mercury/genestack-uploader:2.4.dev
-docker push mercury/genestack-uploader:2.4.prod
+sudo docker login
+sudo docker push mercury/genestack-uploader:2.4.dev
+sudo docker push mercury/genestack-uploader:2.4.prod
 ```
 
 4. log in dev and production (details on Confluence Swarm Page)
@@ -32,7 +44,7 @@ docker push mercury/genestack-uploader:2.4.prod
 docker pull mercury/genestack-uploader:2.4.dev
 docker service scale mystack_genestack-uploader=1
 docker service scale mystack_genestack-uploader=0
-docker service update --image=mercury/genestack-uploader:2.3.dev mystack_genestack-uploader 
+docker service update --image=mercury/genestack-uploader:2.4.dev mystack_genestack-uploader 
 docker service scale mystack_genestack-uploader=1
 ```
 
