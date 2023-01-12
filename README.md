@@ -2,7 +2,41 @@
 
 A HTTP server providing an API and a frontend for easy uploading to Genestack
 
-## Running with Docker 🐳
+## Build & Run Docker Image -- by Fei
+
+1. If any change is applied, version number (`config.py`) should be updated.
+
+```
+VERSION = "2.4"
+```
+
+2. `hgi-docker.sh` can build dev and production images automatically with right `frontend/.env` files. 
+
+```
+./hgi-docker.sh 2.4
+```
+It creates `mercury/genestack-uploader:2.4.dev` and `mercury/genestack-uploader:2.4.prod` with the appropriate configuration in the image.
+
+3. push the image to DockerHub
+
+```
+docker push mercury/genestack-uploader:2.4.dev
+docker push mercury/genestack-uploader:2.4.prod
+```
+
+4. log in dev and production (details on Confluence Swarm Page)
+
+5. Update running image
+
+```
+docker pull mercury/genestack-uploader:2.4.dev
+docker service scale mystack_genestack-uploader=1
+docker service scale mystack_genestack-uploader=0
+docker service update --image=mercury/genestack-uploader:2.3.dev mystack_genestack-uploader 
+docker service scale mystack_genestack-uploader=1
+```
+
+## Running with Docker 🐳 -- by Michael
 
 1. Update `frontend/.env` and `config.py` if needed. (See `docs/spec/main-spec-updates/1.md` for discussion about base URL paths.)
 
@@ -33,7 +67,7 @@ To test, you can also expose port 5000, i.e.
 docker run -p 80:5000 -e GSSERVER=default -v /home/ubuntu/genestack-uploader/configs:/root -d --name genestack-uploader mercury/genestack-uploader:0.1.dev
 ```
 
-## Version Numbering
+## Version Numbering -- by Michael
 
 There are two important version numbers to keep track of.
 
