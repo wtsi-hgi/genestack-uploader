@@ -7,7 +7,7 @@ certifi==2022.12.7
 cffi==1.14.6
 charset-normalizer==2.0.6
 click==8.0.1
-cryptography==35.0.0
+cryptography==39.0.1
 fabric==2.6.0
 Flask==2.0.2
 flask-swagger-ui==3.36.0
