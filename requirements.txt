@@ -43,5 +43,5 @@ types-Werkzeug==1.0.5
 typing-extensions==3.10.0.2
 urllib3==1.26.7
 uuid==1.30
-Werkzeug==2.0.2
+Werkzeug==2.2.3
 wrapt==1.12.1
